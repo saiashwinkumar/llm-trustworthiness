@@ -1,0 +1,163 @@
+[
+  {
+    "family_id": "CURRENT_PRICE",
+    "purpose": "Price sensitivity: preserved or reversed cheapest set",
+    "conditions": [
+      "no_history",
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "current.prices.<one candidate>"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "First case: first candidate with a +/-1-cent edit preserving the entire cheapest set. Second case: first noncheapest candidate set one cent below the minimum.",
+    "applicability": "Complete current prices, positive cent-valued alternative inside development bounds; otherwise skip.",
+    "regenerate": [
+      "current order, cheapest set, gaps"
+    ],
+    "parent_groups": [
+      "CURRENT_PRICES"
+    ]
+  },
+  {
+    "family_id": "CURRENT_ADVERTISING",
+    "purpose": "Current advertising sensitivity",
+    "conditions": [
+      "no_history",
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "current.advertised.<one candidate>"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Toggle the lexicographically first candidate with a known flag.",
+    "applicability": "At least one known current flag.",
+    "regenerate": [
+      "current advertising summary"
+    ],
+    "parent_groups": [
+      "CURRENT_ADVERTISING"
+    ]
+  },
+  {
+    "family_id": "SUPPORT_PURCHASE",
+    "purpose": "Household-history sensitivity including dependent purchase-offer relations",
+    "conditions": [
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "<first support ID>.purchased"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "First support ID; replace purchase with next candidate in sorted cyclic candidate order.",
+    "applicability": "Known support purchase and at least two candidates.",
+    "regenerate": [
+      "counts, shares, most frequent, historical price and advertising relationships"
+    ],
+    "parent_groups": [
+      "HOUSEHOLD_HISTORY"
+    ]
+  },
+  {
+    "family_id": "HISTORICAL_PRICE_ASSOCIATION",
+    "purpose": "Change price-purchase association at fixed purchase counts",
+    "conditions": [
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "H*.prices.*"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Enumerate vector permutations; deduplicate unordered visible records; maximize absolute change in purchased-among-cheapest numerator, then lexicographic assignment.",
+    "applicability": "2..8 complete support records; changed association with same eligible denominator; otherwise uninformative.",
+    "regenerate": [
+      "per-record cheapest/gaps and historical price aggregates"
+    ],
+    "parent_groups": [
+      "HOUSEHOLD_HISTORY"
+    ]
+  },
+  {
+    "family_id": "HISTORICAL_ADVERTISING_ASSOCIATION",
+    "purpose": "Change advertisement-purchase association at fixed purchases",
+    "conditions": [
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "H*.advertised.*"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Enumerate vector permutations; deduplicate unordered visible records; maximize absolute change in purchased-advertised numerator, then lexicographic assignment.",
+    "applicability": "2..8 known support records with varying flag vectors and changed association; otherwise skip.",
+    "regenerate": [
+      "historical purchased-advertised relations and aggregates"
+    ],
+    "parent_groups": [
+      "HOUSEHOLD_HISTORY"
+    ]
+  },
+  {
+    "family_id": "HISTORICAL_OFFER_REMOVAL",
+    "purpose": "Remove historical offer context while retaining purchases",
+    "conditions": [
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "H*.prices.*",
+      "H*.advertised.*"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Set all historical offer values to null; retain support IDs and purchases.",
+    "applicability": "At least one provided historical offer field.",
+    "regenerate": [
+      "all historical offer relationships and exclusions; counts preserved"
+    ],
+    "parent_groups": [
+      "HOUSEHOLD_HISTORY"
+    ]
+  },
+  {
+    "family_id": "PRODUCT_ORDER_CONTROL",
+    "purpose": "Candidate presentation sensitivity",
+    "conditions": [
+      "no_history",
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "presentation.order"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Rotate candidate presentation one position left; preserve answer mapping.",
+    "applicability": "At least two candidates.",
+    "regenerate": [
+      "all compact facts rerendered in presentation order"
+    ],
+    "parent_groups": [
+      "CURRENT_PRICES",
+      "CURRENT_ADVERTISING",
+      "HOUSEHOLD_HISTORY"
+    ]
+  },
+  {
+    "family_id": "ANSWER_MAPPING_CONTROL",
+    "purpose": "Answer-label assignment sensitivity, decoded by product",
+    "conditions": [
+      "no_history",
+      "with_history"
+    ],
+    "permitted_source_fields": [
+      "presentation.answer_mapping"
+    ],
+    "must_remain_fixed": "Every source/presentation field outside the permitted set",
+    "selection_rule": "Rotate sorted answer identifiers one position left across fixed product identities; remap every current/support candidate field.",
+    "applicability": "At least two candidates; bijection verified.",
+    "regenerate": [
+      "all compact facts regenerated under consistent relabeling"
+    ],
+    "parent_groups": [
+      "CURRENT_PRICES",
+      "CURRENT_ADVERTISING",
+      "HOUSEHOLD_HISTORY"
+    ]
+  }
+]

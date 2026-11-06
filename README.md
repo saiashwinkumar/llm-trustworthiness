@@ -1,39 +1,19 @@
 # LLM customer-choice and explanation study
 
-Can an LLM predict customer product choices, and do its explanations identify evidence that actually influences those predictions?
+This repository contains the current research code, saved study records, and a self-contained presentation of the actual experiment.
 
 ## Start here
 
-- [Research presentation](presentation/index.html): download and open locally in a browser.
-- [Offline presentation bundle](presentation/choice-study-presentation.zip): unzip to retain all linked supporting records.
-- [Presentation instructions](presentation/README.md) and [verified findings](presentation/support/snapshot-0525cb3a9a0d665a/presentation_findings.json).
-- [Experiment framework](docs/FRAMEWORK.md), [citation policy](docs/CITATION_POLICY.md), and [resumable study plan](execution_resumed_v1/EXECUTION_PLAN.md).
+- [Actual experiment presentation](presentation/index.html): download and open locally in a browser.
+- [Offline presentation bundle](presentation/actual-experiment-presentation.zip): the HTML and its matching source packets.
+- [Presentation guide](presentation/README.md) and [metric definitions](docs/EXPERIMENT_PRESENTATION.md).
+- [Eight-case repeated-sampling study handoff](choice_study/choice_faithfulness_8x50_v1/HANDOFF.md). Its status is separate from the saved presentation.
 
-The presentation snapshot contains 3,828 original predictions, 242 explanation responses, and 3,736 measured interventions. Another 240 intervention records are skipped tests and do not contribute to measured findings. Test accuracy is 310/804 (38.6%) without support and 405/804 (50.4%) with history. Explanation-based test analyses use 100 selected purchases per condition. Systematic price, advertising, and history-removal analyses use 30 selected purchases with history.
-
-For price edits, each of the 30 purchases has four products and two separate price changes per product (−20% and +20%): 30 × 4 × 2 = 240 edited-input predictions. Twenty changed the predicted product; these changes occurred across ten purchases. These are model behavior measurements, not observed customer responses to edited scenarios.
-
-## Rebuild the presentation offline
-
-```bash
-python3 -B scripts/build_presentation_report.py
-```
-
-This uses the checked-in snapshot, checks source records, and regenerates the same HTML and ZIP without inference or cloud access. Python 3.10+ is recommended. The presentation builder uses Python's standard library. Optional historical analysis and server dependencies are listed separately in the requirements files.
-
-For an authorized read-only refresh from the original EC2 setup, use `python3 -B scripts/build_presentation_report.py --refresh-aws`. That command requires the owner's existing SSH access; no credentials are included in this repository. Cloud commands in the historical instructions are environment-specific and are not run automatically.
-
-## Saved research records
-
-The authoritative snapshot behind the current presentation is `presentation/support/snapshot-0525cb3a9a0d665a/`. Other output and execution folders preserve earlier local experiment records and plans; they can reflect earlier stages. Do not add their counts to the presentation snapshot or interpret historical planning files as current execution status. Original prompts, raw explanation text, prior assessments, and versioned citation reassessments remain available. No human review is implied by the presence of audit templates.
-
-This repository contains source code, prepared data, historical outputs, and the latest verified AWS result snapshot. Credentials, virtual environments, caches, temporary previews, duplicate backup archives, and older duplicated presentation snapshots are excluded. The export manifest records original file hashes. No software or dataset license is inferred by this export.
+The presentation was built from saved records on 26 October 2026. The later repeated-sampling study is preserved at its local snapshot; consult its handoff and reports for status and denominators. Credentials, virtual environments, caches, local logs, and duplicate presentation snapshots are excluded. The export manifest records file hashes and whether each exported file matches the local project source. The notebook has outputs cleared while preserving its current cells.
 
 ---
 
-## Earlier project documentation
-
-The documentation below is preserved for research provenance; some deployment and progress descriptions predate the completed presentation snapshot.
+## Project documentation
 
 # Customer choice and explanation evidence
 
@@ -50,6 +30,22 @@ Can a model predict an observed choice, and does its explanation identify eviden
 This upgrade adds a reusable, versioned experiment framework and a standalone interactive HTML dashboard. It runs locally with Python's standard library; inference stays on your existing CPU model server. No GPU, hosted dashboard, OpenAI API key, or new AWS resource is required.
 
 **Start with the existing real results:** open [the CPU pilot dashboard](reports/cpu_pilot_v2/dashboard.html) in Chrome, Safari, or another browser. It contains 40 saved predictions and 20 explanation attempts, imported without modifying their source files. The findings are exploratory; no calibration or manual grounding results are inferred when absent. A new synthetic product dashboard is at [outputs_v2/demo_products/dashboard.html](outputs_v2/demo_products/dashboard.html), and a text-classification demonstration is at [outputs_v2/demo_text/dashboard.html](outputs_v2/demo_text/dashboard.html).
+
+## Factual observation preview
+
+`choice_trust/observations.py` builds target-free, deterministic observations from the existing prepared yogurt cases. Preview one real case in both conditions with:
+
+```bash
+python3 scripts/preview_observations.py --case-id row-2
+python3 scripts/preview_observations.py --case-id row-2 --json
+python3 -m unittest tests.test_observations -v
+```
+
+The adapter maps `brand_map` to candidate IDs and names, `query.prices` to `current.prices`, `query.ads` to `current.advertised`, and each selected `support` entry's `evidence_id`, `prices`, `ads`, and `choice` to its support ID, prices, advertised flags, and purchased candidate. It never reads `target`. The existing `P_A`/`F_A` pattern and `H1` support IDs are retained; derived IDs are prefixed `OBS:` or use an H-ID suffix. Field references in the generated JSON refer to these mapped input fields, such as `current.prices.A` and `H1.purchased`.
+
+The compact v2 input exposes three source-field groups: `CURRENT_PRICES`, `CURRENT_ADVERTISING`, and `HOUSEHOLD_HISTORY`. Each price, flag, and linked support record appears once. Prices are assumed dollar amounts for this experimental version, with no scaling, and are rounded to two decimals using `Decimal(str(value))` and `ROUND_HALF_UP`. Raw source values and detailed summaries remain in the internal audit payload; comparisons of displayed prices use the same rounded cents. This grouping makes no claim of statistical independence. See [the compact input contract](docs/COMPACT_OBSERVATIONS.md) and [both real-case prompts](examples/compact_observation_preview.txt).
+
+Preview the complete prompts without inference using `python3 scripts/preview_observations.py --case-id row-2 --prompt`. Add `--assignments` to inspect field-to-group provenance outside the prompt. Existing saved notebook and experiment outputs retain their original prompts and versions.
 
 ## Verified deployment and preservation
 

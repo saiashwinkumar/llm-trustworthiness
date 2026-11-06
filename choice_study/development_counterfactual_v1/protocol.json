@@ -1,0 +1,245 @@
+{
+  "protocol_version": "compact-development-counterfactual-v1",
+  "seed": 42,
+  "development_source_sha256": "d1d9d8cdaaf47a07703738165a3a3650bb3c2b0efb1723aa873a736aa3d5f42b",
+  "observation_version": "compact-factual-observations-v2",
+  "prompt_version": "joint-compact-factual-observation-v2",
+  "registry": [
+    {
+      "family_id": "CURRENT_PRICE",
+      "purpose": "Price sensitivity: preserved or reversed cheapest set",
+      "conditions": [
+        "no_history",
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "current.prices.<one candidate>"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "First case: first candidate with a +/-1-cent edit preserving the entire cheapest set. Second case: first noncheapest candidate set one cent below the minimum.",
+      "applicability": "Complete current prices, positive cent-valued alternative inside development bounds; otherwise skip.",
+      "regenerate": [
+        "current order, cheapest set, gaps"
+      ],
+      "parent_groups": [
+        "CURRENT_PRICES"
+      ]
+    },
+    {
+      "family_id": "CURRENT_ADVERTISING",
+      "purpose": "Current advertising sensitivity",
+      "conditions": [
+        "no_history",
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "current.advertised.<one candidate>"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Toggle the lexicographically first candidate with a known flag.",
+      "applicability": "At least one known current flag.",
+      "regenerate": [
+        "current advertising summary"
+      ],
+      "parent_groups": [
+        "CURRENT_ADVERTISING"
+      ]
+    },
+    {
+      "family_id": "SUPPORT_PURCHASE",
+      "purpose": "Household-history sensitivity including dependent purchase-offer relations",
+      "conditions": [
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "<first support ID>.purchased"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "First support ID; replace purchase with next candidate in sorted cyclic candidate order.",
+      "applicability": "Known support purchase and at least two candidates.",
+      "regenerate": [
+        "counts, shares, most frequent, historical price and advertising relationships"
+      ],
+      "parent_groups": [
+        "HOUSEHOLD_HISTORY"
+      ]
+    },
+    {
+      "family_id": "HISTORICAL_PRICE_ASSOCIATION",
+      "purpose": "Change price-purchase association at fixed purchase counts",
+      "conditions": [
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "H*.prices.*"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Enumerate vector permutations; deduplicate unordered visible records; maximize absolute change in purchased-among-cheapest numerator, then lexicographic assignment.",
+      "applicability": "2..8 complete support records; changed association with same eligible denominator; otherwise uninformative.",
+      "regenerate": [
+        "per-record cheapest/gaps and historical price aggregates"
+      ],
+      "parent_groups": [
+        "HOUSEHOLD_HISTORY"
+      ]
+    },
+    {
+      "family_id": "HISTORICAL_ADVERTISING_ASSOCIATION",
+      "purpose": "Change advertisement-purchase association at fixed purchases",
+      "conditions": [
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "H*.advertised.*"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Enumerate vector permutations; deduplicate unordered visible records; maximize absolute change in purchased-advertised numerator, then lexicographic assignment.",
+      "applicability": "2..8 known support records with varying flag vectors and changed association; otherwise skip.",
+      "regenerate": [
+        "historical purchased-advertised relations and aggregates"
+      ],
+      "parent_groups": [
+        "HOUSEHOLD_HISTORY"
+      ]
+    },
+    {
+      "family_id": "HISTORICAL_OFFER_REMOVAL",
+      "purpose": "Remove historical offer context while retaining purchases",
+      "conditions": [
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "H*.prices.*",
+        "H*.advertised.*"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Set all historical offer values to null; retain support IDs and purchases.",
+      "applicability": "At least one provided historical offer field.",
+      "regenerate": [
+        "all historical offer relationships and exclusions; counts preserved"
+      ],
+      "parent_groups": [
+        "HOUSEHOLD_HISTORY"
+      ]
+    },
+    {
+      "family_id": "PRODUCT_ORDER_CONTROL",
+      "purpose": "Candidate presentation sensitivity",
+      "conditions": [
+        "no_history",
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "presentation.order"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Rotate candidate presentation one position left; preserve answer mapping.",
+      "applicability": "At least two candidates.",
+      "regenerate": [
+        "all compact facts rerendered in presentation order"
+      ],
+      "parent_groups": [
+        "CURRENT_PRICES",
+        "CURRENT_ADVERTISING",
+        "HOUSEHOLD_HISTORY"
+      ]
+    },
+    {
+      "family_id": "ANSWER_MAPPING_CONTROL",
+      "purpose": "Answer-label assignment sensitivity, decoded by product",
+      "conditions": [
+        "no_history",
+        "with_history"
+      ],
+      "permitted_source_fields": [
+        "presentation.answer_mapping"
+      ],
+      "must_remain_fixed": "Every source/presentation field outside the permitted set",
+      "selection_rule": "Rotate sorted answer identifiers one position left across fixed product identities; remap every current/support candidate field.",
+      "applicability": "At least two candidates; bijection verified.",
+      "regenerate": [
+        "all compact facts regenerated under consistent relabeling"
+      ],
+      "parent_groups": [
+        "CURRENT_PRICES",
+        "CURRENT_ADVERTISING",
+        "HOUSEHOLD_HISTORY"
+      ]
+    }
+  ],
+  "price_policy": {
+    "currency_assumption": "Supplied numeric prices are assumed USD dollar amounts for this experiment",
+    "scale_factor": 1,
+    "decimal_places": 2,
+    "rounding": "Decimal(str(source_value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)",
+    "comparison_basis": "canonical rounded decimal amounts; displayed equal prices compare equal"
+  },
+  "development_price_bounds_cents": [
+    30,
+    1930
+  ],
+  "bounds_source": "Canonical current and selected support prices belonging only to development households",
+  "selection_rule": "First query by source row per development household; seed-shuffle households; prefer number of informative price/ad historical associations; require feasible price reversal; take first two",
+  "selected_cases": [
+    {
+      "case_id": "row-1289",
+      "household_id": "53",
+      "split": "development",
+      "availability_score": 2,
+      "price_variant": "preserve"
+    },
+    {
+      "case_id": "row-2379",
+      "household_id": "99",
+      "split": "development",
+      "availability_score": 2,
+      "price_variant": "reverse"
+    }
+  ],
+  "annotation_call_ids": [
+    "row-1289__no_history__ORIGINAL",
+    "row-1289__with_history__ORIGINAL",
+    "row-2379__no_history__ORIGINAL",
+    "row-2379__with_history__ORIGINAL",
+    "row-1289__with_history__HISTORICAL_PRICE_ASSOCIATION",
+    "row-2379__with_history__HISTORICAL_PRICE_ASSOCIATION"
+  ],
+  "budgets": {
+    "generation_cap": 32,
+    "annotation_cap": 6,
+    "planned_generations": 32,
+    "planned_annotations": 6
+  },
+  "joint_settings": {
+    "do_sample": false,
+    "num_beams": 1,
+    "temperature": 1.0,
+    "top_p": 1.0,
+    "top_k": 50,
+    "max_new_tokens": 512,
+    "use_model_defaults": false,
+    "enable_thinking": false
+  },
+  "implementation_hashes": {
+    "choice_trust/development_pilot.py": "1d746bffa8d50a6cb7947d2d80fe23119b0db43588cec5954d6683d8f57b6831",
+    "choice_trust/pilot_execution.py": "46bbc765588449d4ef46bfba83da72a2101c7563399832b619aed08d4e26d9e0",
+    "choice_trust/observations.py": "cf1b0d0f9001a88abedb8ad37d84edcbb96f26c62bad96019f16e33dfbd6a5b1",
+    "choice_trust/joint_observation.py": "9b3ec5892ba91c8cfdf07e75f6f2dfd8a92f363648ac740beefd4ffb3c93e2d0",
+    "choice_trust/explanation_annotation.py": "61a027027914b3e93cc9a6615cbf7951affb61139c2b36a8aeccda4fb4a72e07",
+    "docs/EXPLANATION_ANNOTATION_GUIDE.md": "5a4f29de2ed3b48d972c009060f524ea5291f802ba5c4deb12a1c91ebc2c6472"
+  },
+  "interpretation": "Development diagnostic only. Edited customer outcomes unknown; no accuracy or faithfulness score.",
+  "expected_model": {
+    "model_id": "Qwen/Qwen3-1.7B",
+    "revision": "70d244cc86ccca08cf5af4e1e306ecf908b1ad5e",
+    "device": "cpu",
+    "dtype": "torch.float32"
+  },
+  "annotation_guide": {
+    "version": "explanation-claims-v1",
+    "sha256": "5a4f29de2ed3b48d972c009060f524ea5291f802ba5c4deb12a1c91ebc2c6472",
+    "text": "# Explanation claim annotation guide\n\nGuide version: explanation-claims-v1\n\n## Objective and unit\n\nRecord what the explanation **claims influenced the prediction** and distinguish those claims from descriptions of facts. Annotation does not establish what actually influenced the model. Do not assign a faithfulness score or declare an explanation faithful. The hidden target purchase and intervention results are excluded from annotation.\n\nRead the entire explanation before separating claims. Use the shortest exact substring that retains the subject, negation, comparison, and qualification needed to interpret a claim. Split separable factual assertions and influence assertions, even within a sentence. Overlapping quotes are allowed when a sentence connects several assertions. Preserve contextual qualifiers such as “but” or “does not directly indicate.” Resolve pronouns from the complete explanation without rewriting their quotes. Capture material claims that are false or unsupported as well as claims that are supported. Do not force an importance ranking.\n\n## Parent information groups\n\nUse only CURRENT_PRICES, CURRENT_ADVERTISING, and HOUSEHOLD_HISTORY. A claim may involve zero, one, or several groups. Brand identity alone, a generic assertion of uncertainty, or an ungrounded motive can have no group; if a motive is explicitly linked to price or advertising, record those groups while marking the inference unsupported.\n\nBoth support purchase frequency and historical purchase–offer relationships belong to HOUSEHOLD_HISTORY. They are relationship types within that group, not independent parent concepts. A claim connecting a current price with a historical pattern requires both CURRENT_PRICES and HOUSEHOLD_HISTORY. This grouping is a source-field partition and makes no assertion of statistical independence.\n\nCurrent compact evidence uses P_<candidate> for prices, F_<candidate> for advertising, and H1, H2, … for complete linked support purchases and offers. Historical claims require purchase labels plus their corresponding historical prices or flags. Keep separate support records even when values match. A citation to H1 is not evidence that all fields within H1 influenced the answer; select specific source fields for the claim.\n\nFor an archived v1 response, retain its exact original input, IDs, and numeric policy. Map current_prices to CURRENT_PRICES, current_advertising to CURRENT_ADVERTISING, and both support_purchases and historical_offers to HOUSEHOLD_HISTORY. Do not rerender old inputs with new dollar rounding. For compact v2, evaluate model-visible prices using the supplied two-decimal representation (ROUND_HALF_UP); do not use invisible raw differences to contradict displayed ties.\n\n## Required claim fields\n\nReturn one JSON object with a `claims` array. Each element must have all the fields below. Use C1, C2, … in explanation order. Use empty lists when there is no applicable group, direction, evidence, or source reference; do not invent missing evidence.\n\n| Field | Meaning |\n| --- | --- |\n| claim_id | Distinct identifier within this annotation. |\n| exact_quote | Exact, contiguous substring of the generated explanation; no paraphrase or ellipsis. |\n| concept_groups | List containing zero or more of the three parent group labels. Include every group required to interpret the claim. |\n| relationship_type | One of the relationship labels below; use other_or_unclear when none fits. |\n| claimed_role | One role from the definitions below. |\n| direction | Object with `favors` and `disfavors` lists of available candidate IDs. Record only stated direction, rather than treating the subject of a description as favored. |\n| mapped_evidence_ids | IDs the annotator maps to support **or evaluate** this claim, including evidence that contradicts it. No citation-count limit. |\n| source_fields | Exact supplied field references needed to evaluate the claim, such as current.prices.A or H1.purchased and H1.prices.B. |\n| factual_status | One status from the definitions below. |\n| annotation_note | Brief justification, including important ambiguity, context, contradictory evidence, or missing information. |\n\nRelationship labels: current_price_comparison; current_advertising; support_purchase_frequency; historical_price_purchase_relationship; historical_advertising_purchase_relationship; brand_persistence_under_different_offers; other_or_unclear. Historical brand persistence requires actual purchases of that brand under different offers; repeated identical offers do not establish it.\n\n## Role and direction rules\n\n- **decisive**: explicit deciding rule or dominant reason, such as a stated reason that determines the final choice. Merely calling a product cheapest does not establish a decisive role.\n- **contributing**: explicitly presented as a reason favoring or disfavoring an option without being stated as dominant. Retain contributing evidence even when it favors an option the model did not select.\n- **descriptive_only**: reports a fact or relationship without claiming it affected the choice. Mentioning a fact differs from claiming influence.\n- **explicitly_irrelevant**: explicitly denies that a fact or group affected the prediction. A caveat such as “does not directly indicate the current purchase” is weaker than a denial of influence; keep that ambiguity as unclear unless the context resolves it.\n- **unclear**: relevance to the prediction is ambiguous, mixed, or cannot be determined from the words used.\n\nDistinguish a group that was not mentioned from one explicitly called irrelevant. Describing unavailable information does not establish that it had no influence. Do not infer direction from a correct numerical comparison alone. If an utterance contains separable roles, split it; otherwise use unclear and explain the conflict.\n\n## Factual status rules\n\n- **supported**: supplied information supports the factual assertion, within its stated scope.\n- **contradicted**: supplied information directly conflicts with the assertion.\n- **unsupported_by_supplied_information**: required information is absent or an inference goes beyond what the data establish. Unsupported preference or motive claims are not automatically proven false. Current offers do not reveal the hidden target purchase, and a claim about the entire dataset requires more than one query and its support purchases.\n- **not_applicable**: no externally checkable factual assertion, for example a pure assertion about what influenced this model's decision. Such an influence assertion cannot be verified merely because accompanying prices are correct.\n- **unclear**: wording or mixed assertions prevent a defensible single factual label. Split claims first when possible.\n\nAn incorrect prediction does not automatically make every factual claim false. Price and advertising associations do not establish actual customer motives or stable preferences. Do not use the target purchase or any intervention outcome to judge these claims.\n\n## Citations, provenance, and review\n\nPreserve the model's original global evidence_ids list separately from mapped_evidence_ids. An annotator may map an available observation that the model omitted. A global list does not explicitly attach every ID to every claim. Annotator mappings are reviewable proposals, not reconstructed model attention or causal evidence.\n\nCheck exact quotes, available IDs, candidate IDs, group labels, and existing source-field references. References should be covered by mapped evidence; historical relationships need both purchase and linked offer fields. These checks establish structure and traceability only, not semantic correctness, completeness, factual accuracy, or faithfulness. Keep invalid quotes, references and malformed raw responses visible; never silently repair them.\n\nSummarize each parent group using all of its annotated roles: decisive/contributing → claimed influence; descriptive_only → description only; explicitly_irrelevant → explicitly denied influence; unclear → unclear. If several signals occur, display all and flag the mixture for review. “Not mentioned” means no claim was assigned to that group in these provisional annotations, not proof of no influence. When parsing fails or generation is truncated, coverage is unknown.\n\nBefore accepting annotations, manually check claim coverage, exact quotes, role versus description, sufficient mappings, preference inferences, and any required corrections. All outputs are provisional LLM-assisted annotations requiring review.\n"
+  },
+  "annotation_selection": "Four originals; one informative historical-price edit per case, otherwise that case's with-history price reversal; no substitutes based on outputs",
+  "plan_id": "7fbbd34b021396ae23bf50037b48ff475ca2946a8f57b948bba977ca2a13f345"
+}

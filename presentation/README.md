@@ -1,56 +1,66 @@
-# Research presentation
+# Actual experiment presentation
 
-Open `index.html` directly in a browser. Its styling and selected original-response
-downloads are embedded; no web service, external fonts, or network connection is
-needed to read the presentation. A small embedded script positions the counterfactual
-inputs near the highlighted edits; all text remains readable with JavaScript disabled.
-For all linked records, unzip
-`choice-study-presentation.zip` and keep the `support` directory beside `index.html`.
+Open `index.html` directly in a browser. It is self-contained: styles, tab behavior,
+offline MathML formulas and downloadable source packets are embedded. No CDN,
+server, login or network connection is required to read it. There are exactly two
+main tabs: **Evaluation** and **One complete example**.
 
-From `/Users/saiashwin/llm-trustworthiness`, refresh the same dashboard with:
+Refresh the saved EC2 annotation snapshot and rebuild:
 
 ```bash
-.venv/bin/python -B scripts/build_presentation_report.py --refresh-aws
+.venv/bin/python -B scripts/build_experiment_presentation.py --refresh-aws
 ```
 
-The command reads the authoritative AWS continuation through the existing SSH
-identity. It makes no model calls, performs no remote writes, and does not acquire
-experiment writer locks or modify the model, queue, inputs, or original results.
-The dashboard stays separate from `outputs_resumed_v1/dashboard.html`, which the
-experiment queue manages.
+Rebuild offline using the last captured immutable snapshots:
 
-The read-only snapshot captures newline-complete intervention records first,
-explanations second, and predictions last. Read sizes are bounded at file-open time.
-A trailing unfinished record is excluded and documented in provenance; malformed
-complete records cause a failure. Source file hashes, record hashes, parent links,
-household splits, prompt reconstruction, and before/after measurements are verified.
-Independent checks recompute displayed accuracy, baseline counts, and measured
-denominators, check downloadable quotes and links, and exercise partial-record reads.
-The main page is replaced atomically only after these checks pass. The old page and
-all experiment outputs survive a failed refresh. A ZIP contains the matching source
-snapshot; older snapshots remain available locally.
+```bash
+.venv/bin/python -B scripts/build_experiment_presentation.py
+```
 
-Omit `--refresh-aws` for a local rebuild using the saved snapshot. Formatting is in
-`presentation_src/style.css`; assembly and data-driven takeaways are in
-`scripts/build_presentation_report.py`. Metadata and source counts belong in the
-supporting files, not the presentation. The page contains no execution status.
+These commands never call the predictor or annotator, regenerate predictions,
+change protocol/settings, or write to EC2. The refresh option uses read-only SSH
+with the existing experiment identity. The independent overnight annotator can
+continue running while its already published results are captured.
 
-Explanation examples preserve the original wording. The example selection rules,
-prompt-version cohorts, citation policy, baseline definitions, record IDs, and
-intervention denominators are recorded in the linked sources. Random controls are
-not called uncited unless their evidence IDs are disjoint from the cited set.
-All example prompts are displayed verbatim in scrollable panels. The counterfactual
-section shows four types: cited removal, comparable uncited removal, a price change,
-and presentation order. Original and edited inputs and predictions appear side by
-side; highlighted lines differ in content or position from the saved original input. The builder
-verifies the full displayed prompt text and highlighted changes against source records.
-The observed purchase is explicitly the original dataset outcome, hidden from the
-model; it is not a customer outcome for the edited scenario. The uncited example can
-reuse a measured keep-cited test when its actual masked complement is wholly uncited
-and matches the cited-removal case in evidence count and type. This equivalence is
-verified from edited evidence and recorded with the source record IDs.
-Example cards omit split labels; aggregate prediction sections retain their split names.
+`report_config.json` freezes **row-44** as the complete example. Selection ranks
+saved-record completeness, then applicability breadth, then numeric query ID; it
+does not consult correctness, explanation quality or annotation judgments.
 
-Local rendering was checked with headless Chrome using a fresh temporary profile.
-`scripts/render_presentation_preview.py` is an optional local QA helper; it does not
-alter the report or require the experiment server.
+Original prediction accuracy for the joint workflow shows only Test with history.
+The existing score-then-explain workflow's accuracy
+is shown separately for all three splits, with both support conditions. All other
+displayed metrics show only Test with history; their Development/Validation and
+Test-without-support results are omitted.
+
+Supporting files in `support/actual-experiment-*/` retain metric definitions,
+counts, exclusions, canonical-identity comparisons, exact prompts/responses,
+source hashes and annotation linkage. Both source downloads also work from the
+standalone HTML. `actual-experiment-presentation.zip` bundles the HTML with its
+matching supporting files and frozen report configuration. Older snapshots and
+the previous report (`earlier-workflow.html`) are preserved.
+
+Luna assessments are automated, not human-confirmed truth. Only structurally
+traceable complete-source annotations enter aggregate metrics; failed raw records
+remain preserved. Earlier raw Qwen annotations and agent-assisted correction
+proposals remain in their separate source layers and are not substituted or
+represented as human review.
+
+The frozen stale metric is response-level; the requested claim-level view has an
+explicit separate denominator. A conservative read-only adapter handles supported
+Luna deciding rules and changed-field influence matches; these choices and any
+comparison with the archived matcher are documented in the supporting analysis.
+No old metric output or annotation is overwritten. See
+`docs/EXPERIMENT_PRESENTATION.md` for these details and unavailable results.
+
+Focused source-integrity checks run before the main page is replaced. Local Chrome
+QA verifies both tabs, arrow/Home/End keyboard navigation, offline formulas,
+responsive layout, exact source quotations and changed-span highlighting:
+
+```bash
+.venv/bin/python -m unittest tests.test_experiment_presentation tests.test_test100_metrics
+.venv/bin/python scripts/render_experiment_presentation.py --width 1440 --tab evaluation
+.venv/bin/python scripts/render_experiment_presentation.py --width 1440 --tab example
+```
+
+The old `build_presentation_report.py` command belongs to the archived earlier
+workflow and is not the builder for this two-tab report.

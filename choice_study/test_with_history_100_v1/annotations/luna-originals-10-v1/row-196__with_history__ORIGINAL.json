@@ -1,0 +1,823 @@
+{
+  "call_id": "row-196__with_history__ORIGINAL",
+  "source_response_id": "row-196__with_history__ORIGINAL",
+  "case_id": "row-196",
+  "condition": "with_history",
+  "family": "ORIGINAL",
+  "annotation_id": "luna10:LUNA10_02__row-196:resp_044d5ad9c8cf0093016ade24911b2087d19c99022118473d03",
+  "source_response_sha256": "ffb020b11784ccd963aa70028c5867ea389d7d216c68f78013493da13331feab",
+  "job_signature": "68666d08f33a68ef1746d7915d728e67747c6d1ad3769737e855255c9b7d78a4",
+  "model_generated": true,
+  "human_reviewed": false,
+  "result": {
+    "annotation_guide": {
+      "version": "explanation-claims-v1",
+      "sha256": "5a4f29de2ed3b48d972c009060f524ea5291f802ba5c4deb12a1c91ebc2c6472",
+      "text": "# Explanation claim annotation guide\n\nGuide version: explanation-claims-v1\n\n## Objective and unit\n\nRecord what the explanation **claims influenced the prediction** and distinguish those claims from descriptions of facts. Annotation does not establish what actually influenced the model. Do not assign a faithfulness score or declare an explanation faithful. The hidden target purchase and intervention results are excluded from annotation.\n\nRead the entire explanation before separating claims. Use the shortest exact substring that retains the subject, negation, comparison, and qualification needed to interpret a claim. Split separable factual assertions and influence assertions, even within a sentence. Overlapping quotes are allowed when a sentence connects several assertions. Preserve contextual qualifiers such as “but” or “does not directly indicate.” Resolve pronouns from the complete explanation without rewriting their quotes. Capture material claims that are false or unsupported as well as claims that are supported. Do not force an importance ranking.\n\n## Parent information groups\n\nUse only CURRENT_PRICES, CURRENT_ADVERTISING, and HOUSEHOLD_HISTORY. A claim may involve zero, one, or several groups. Brand identity alone, a generic assertion of uncertainty, or an ungrounded motive can have no group; if a motive is explicitly linked to price or advertising, record those groups while marking the inference unsupported.\n\nBoth support purchase frequency and historical purchase–offer relationships belong to HOUSEHOLD_HISTORY. They are relationship types within that group, not independent parent concepts. A claim connecting a current price with a historical pattern requires both CURRENT_PRICES and HOUSEHOLD_HISTORY. This grouping is a source-field partition and makes no assertion of statistical independence.\n\nCurrent compact evidence uses P_<candidate> for prices, F_<candidate> for advertising, and H1, H2, … for complete linked support purchases and offers. Historical claims require purchase labels plus their corresponding historical prices or flags. Keep separate support records even when values match. A citation to H1 is not evidence that all fields within H1 influenced the answer; select specific source fields for the claim.\n\nFor an archived v1 response, retain its exact original input, IDs, and numeric policy. Map current_prices to CURRENT_PRICES, current_advertising to CURRENT_ADVERTISING, and both support_purchases and historical_offers to HOUSEHOLD_HISTORY. Do not rerender old inputs with new dollar rounding. For compact v2, evaluate model-visible prices using the supplied two-decimal representation (ROUND_HALF_UP); do not use invisible raw differences to contradict displayed ties.\n\n## Required claim fields\n\nReturn one JSON object with a `claims` array. Each element must have all the fields below. Use C1, C2, … in explanation order. Use empty lists when there is no applicable group, direction, evidence, or source reference; do not invent missing evidence.\n\n| Field | Meaning |\n| --- | --- |\n| claim_id | Distinct identifier within this annotation. |\n| exact_quote | Exact, contiguous substring of the generated explanation; no paraphrase or ellipsis. |\n| concept_groups | List containing zero or more of the three parent group labels. Include every group required to interpret the claim. |\n| relationship_type | One of the relationship labels below; use other_or_unclear when none fits. |\n| claimed_role | One role from the definitions below. |\n| direction | Object with `favors` and `disfavors` lists of available candidate IDs. Record only stated direction, rather than treating the subject of a description as favored. |\n| mapped_evidence_ids | IDs the annotator maps to support **or evaluate** this claim, including evidence that contradicts it. No citation-count limit. |\n| source_fields | Exact supplied field references needed to evaluate the claim, such as current.prices.A or H1.purchased and H1.prices.B. |\n| factual_status | One status from the definitions below. |\n| annotation_note | Brief justification, including important ambiguity, context, contradictory evidence, or missing information. |\n\nRelationship labels: current_price_comparison; current_advertising; support_purchase_frequency; historical_price_purchase_relationship; historical_advertising_purchase_relationship; brand_persistence_under_different_offers; other_or_unclear. Historical brand persistence requires actual purchases of that brand under different offers; repeated identical offers do not establish it.\n\n## Role and direction rules\n\n- **decisive**: explicit deciding rule or dominant reason, such as a stated reason that determines the final choice. Merely calling a product cheapest does not establish a decisive role.\n- **contributing**: explicitly presented as a reason favoring or disfavoring an option without being stated as dominant. Retain contributing evidence even when it favors an option the model did not select.\n- **descriptive_only**: reports a fact or relationship without claiming it affected the choice. Mentioning a fact differs from claiming influence.\n- **explicitly_irrelevant**: explicitly denies that a fact or group affected the prediction. A caveat such as “does not directly indicate the current purchase” is weaker than a denial of influence; keep that ambiguity as unclear unless the context resolves it.\n- **unclear**: relevance to the prediction is ambiguous, mixed, or cannot be determined from the words used.\n\nDistinguish a group that was not mentioned from one explicitly called irrelevant. Describing unavailable information does not establish that it had no influence. Do not infer direction from a correct numerical comparison alone. If an utterance contains separable roles, split it; otherwise use unclear and explain the conflict.\n\n## Factual status rules\n\n- **supported**: supplied information supports the factual assertion, within its stated scope.\n- **contradicted**: supplied information directly conflicts with the assertion.\n- **unsupported_by_supplied_information**: required information is absent or an inference goes beyond what the data establish. Unsupported preference or motive claims are not automatically proven false. Current offers do not reveal the hidden target purchase, and a claim about the entire dataset requires more than one query and its support purchases.\n- **not_applicable**: no externally checkable factual assertion, for example a pure assertion about what influenced this model's decision. Such an influence assertion cannot be verified merely because accompanying prices are correct.\n- **unclear**: wording or mixed assertions prevent a defensible single factual label. Split claims first when possible.\n\nAn incorrect prediction does not automatically make every factual claim false. Price and advertising associations do not establish actual customer motives or stable preferences. Do not use the target purchase or any intervention outcome to judge these claims.\n\n## Citations, provenance, and review\n\nPreserve the model's original global evidence_ids list separately from mapped_evidence_ids. An annotator may map an available observation that the model omitted. A global list does not explicitly attach every ID to every claim. Annotator mappings are reviewable proposals, not reconstructed model attention or causal evidence.\n\nCheck exact quotes, available IDs, candidate IDs, group labels, and existing source-field references. References should be covered by mapped evidence; historical relationships need both purchase and linked offer fields. These checks establish structure and traceability only, not semantic correctness, completeness, factual accuracy, or faithfulness. Keep invalid quotes, references and malformed raw responses visible; never silently repair them.\n\nSummarize each parent group using all of its annotated roles: decisive/contributing → claimed influence; descriptive_only → description only; explicitly_irrelevant → explicitly denied influence; unclear → unclear. If several signals occur, display all and flag the mixture for review. “Not mentioned” means no claim was assigned to that group in these provisional annotations, not proof of no influence. When parsing fails or generation is truncated, coverage is unknown.\n\nBefore accepting annotations, manually check claim coverage, exact quotes, role versus description, sufficient mappings, preference inferences, and any required corrections. All outputs are provisional LLM-assisted annotations requiring review.\n"
+    },
+    "annotation_input": {
+      "explanation": "The customer purchased a product with a price of $5.00. This is the lowest price among the available options. The customer's previous purchases (H1, H2, H3, H4, H5) also included a $5.00 purchase for product B. The lowest price for product B is $5.00, and the customer has a history of purchasing product B at this price. Therefore, it is most likely that the customer purchased product B on this occasion.",
+      "predicted_candidate": "B",
+      "model_citations": [
+        "P_B",
+        "H1",
+        "H2",
+        "H3",
+        "H4",
+        "H5"
+      ],
+      "candidates": [
+        {
+          "id": "A",
+          "name": "dannon"
+        },
+        {
+          "id": "B",
+          "name": "hiland"
+        },
+        {
+          "id": "C",
+          "name": "weight"
+        },
+        {
+          "id": "D",
+          "name": "yoplait"
+        }
+      ],
+      "observations": {
+        "version": "compact-factual-observations-v2",
+        "text": "CURRENT_PRICES\n[P_A] A: $8.10\n[P_B] B: $5.00\n[P_C] C: $8.10\n[P_D] D: $10.80\n\nCURRENT_ADVERTISING\n[F_A] A: NOT_ADVERTISED\n[F_B] B: NOT_ADVERTISED\n[F_C] C: NOT_ADVERTISED\n[F_D] D: NOT_ADVERTISED\n\nHOUSEHOLD_HISTORY\n[H1] Purchased=A; prices={A:$8.10, B:$6.40, C:$8.10, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\n[H2] Purchased=A; prices={A:$8.10, B:$5.00, C:$8.00, D:$11.60}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\n[H3] Purchased=A; prices={A:$8.10, B:$6.10, C:$7.90, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\n[H4] Purchased=A; prices={A:$8.10, B:$5.00, C:$7.90, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\n[H5] Purchased=A; prices={A:$8.10, B:$5.00, C:$8.10, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+        "observations": [
+          {
+            "dependencies": [],
+            "group": "CURRENT_PRICES",
+            "id": "P_A",
+            "sources": [
+              "current.prices.A"
+            ],
+            "statement": "A: $8.10",
+            "status": "available",
+            "type": "price",
+            "value": "8.10"
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_PRICES",
+            "id": "P_B",
+            "sources": [
+              "current.prices.B"
+            ],
+            "statement": "B: $5.00",
+            "status": "available",
+            "type": "price",
+            "value": "5.00"
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_PRICES",
+            "id": "P_C",
+            "sources": [
+              "current.prices.C"
+            ],
+            "statement": "C: $8.10",
+            "status": "available",
+            "type": "price",
+            "value": "8.10"
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_PRICES",
+            "id": "P_D",
+            "sources": [
+              "current.prices.D"
+            ],
+            "statement": "D: $10.80",
+            "status": "available",
+            "type": "price",
+            "value": "10.80"
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_ADVERTISING",
+            "id": "F_A",
+            "sources": [
+              "current.advertised.A"
+            ],
+            "statement": "A: NOT_ADVERTISED",
+            "status": "available",
+            "type": "advertising",
+            "value": false
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_ADVERTISING",
+            "id": "F_B",
+            "sources": [
+              "current.advertised.B"
+            ],
+            "statement": "B: NOT_ADVERTISED",
+            "status": "available",
+            "type": "advertising",
+            "value": false
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_ADVERTISING",
+            "id": "F_C",
+            "sources": [
+              "current.advertised.C"
+            ],
+            "statement": "C: NOT_ADVERTISED",
+            "status": "available",
+            "type": "advertising",
+            "value": false
+          },
+          {
+            "dependencies": [],
+            "group": "CURRENT_ADVERTISING",
+            "id": "F_D",
+            "sources": [
+              "current.advertised.D"
+            ],
+            "statement": "D: NOT_ADVERTISED",
+            "status": "available",
+            "type": "advertising",
+            "value": false
+          },
+          {
+            "dependencies": [],
+            "group": "HOUSEHOLD_HISTORY",
+            "id": "H1",
+            "sources": [
+              "H1.purchased",
+              "H1.prices.A",
+              "H1.prices.B",
+              "H1.prices.C",
+              "H1.prices.D",
+              "H1.advertised.A",
+              "H1.advertised.B",
+              "H1.advertised.C",
+              "H1.advertised.D"
+            ],
+            "statement": "Purchased=A; prices={A:$8.10, B:$6.40, C:$8.10, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+            "status": "available",
+            "type": "historical_offer",
+            "value": {
+              "advertised": {
+                "A": false,
+                "B": false,
+                "C": false,
+                "D": false
+              },
+              "prices": {
+                "A": "8.10",
+                "B": "6.40",
+                "C": "8.10",
+                "D": "10.30"
+              },
+              "purchased": "A"
+            }
+          },
+          {
+            "dependencies": [],
+            "group": "HOUSEHOLD_HISTORY",
+            "id": "H2",
+            "sources": [
+              "H2.purchased",
+              "H2.prices.A",
+              "H2.prices.B",
+              "H2.prices.C",
+              "H2.prices.D",
+              "H2.advertised.A",
+              "H2.advertised.B",
+              "H2.advertised.C",
+              "H2.advertised.D"
+            ],
+            "statement": "Purchased=A; prices={A:$8.10, B:$5.00, C:$8.00, D:$11.60}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+            "status": "available",
+            "type": "historical_offer",
+            "value": {
+              "advertised": {
+                "A": false,
+                "B": false,
+                "C": false,
+                "D": false
+              },
+              "prices": {
+                "A": "8.10",
+                "B": "5.00",
+                "C": "8.00",
+                "D": "11.60"
+              },
+              "purchased": "A"
+            }
+          },
+          {
+            "dependencies": [],
+            "group": "HOUSEHOLD_HISTORY",
+            "id": "H3",
+            "sources": [
+              "H3.purchased",
+              "H3.prices.A",
+              "H3.prices.B",
+              "H3.prices.C",
+              "H3.prices.D",
+              "H3.advertised.A",
+              "H3.advertised.B",
+              "H3.advertised.C",
+              "H3.advertised.D"
+            ],
+            "statement": "Purchased=A; prices={A:$8.10, B:$6.10, C:$7.90, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+            "status": "available",
+            "type": "historical_offer",
+            "value": {
+              "advertised": {
+                "A": false,
+                "B": false,
+                "C": false,
+                "D": false
+              },
+              "prices": {
+                "A": "8.10",
+                "B": "6.10",
+                "C": "7.90",
+                "D": "10.80"
+              },
+              "purchased": "A"
+            }
+          },
+          {
+            "dependencies": [],
+            "group": "HOUSEHOLD_HISTORY",
+            "id": "H4",
+            "sources": [
+              "H4.purchased",
+              "H4.prices.A",
+              "H4.prices.B",
+              "H4.prices.C",
+              "H4.prices.D",
+              "H4.advertised.A",
+              "H4.advertised.B",
+              "H4.advertised.C",
+              "H4.advertised.D"
+            ],
+            "statement": "Purchased=A; prices={A:$8.10, B:$5.00, C:$7.90, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+            "status": "available",
+            "type": "historical_offer",
+            "value": {
+              "advertised": {
+                "A": false,
+                "B": false,
+                "C": false,
+                "D": false
+              },
+              "prices": {
+                "A": "8.10",
+                "B": "5.00",
+                "C": "7.90",
+                "D": "10.80"
+              },
+              "purchased": "A"
+            }
+          },
+          {
+            "dependencies": [],
+            "group": "HOUSEHOLD_HISTORY",
+            "id": "H5",
+            "sources": [
+              "H5.purchased",
+              "H5.prices.A",
+              "H5.prices.B",
+              "H5.prices.C",
+              "H5.prices.D",
+              "H5.advertised.A",
+              "H5.advertised.B",
+              "H5.advertised.C",
+              "H5.advertised.D"
+            ],
+            "statement": "Purchased=A; prices={A:$8.10, B:$5.00, C:$8.10, D:$10.80}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.",
+            "status": "available",
+            "type": "historical_offer",
+            "value": {
+              "advertised": {
+                "A": false,
+                "B": false,
+                "C": false,
+                "D": false
+              },
+              "prices": {
+                "A": "8.10",
+                "B": "5.00",
+                "C": "8.10",
+                "D": "10.80"
+              },
+              "purchased": "A"
+            }
+          }
+        ]
+      },
+      "provenance": {
+        "P_A": {
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "source_fields": [
+            "current.prices.A"
+          ],
+          "dependencies": []
+        },
+        "P_B": {
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "source_fields": [
+            "current.prices.B"
+          ],
+          "dependencies": []
+        },
+        "P_C": {
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "source_fields": [
+            "current.prices.C"
+          ],
+          "dependencies": []
+        },
+        "P_D": {
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "source_fields": [
+            "current.prices.D"
+          ],
+          "dependencies": []
+        },
+        "F_A": {
+          "concept_groups": [
+            "CURRENT_ADVERTISING"
+          ],
+          "source_fields": [
+            "current.advertised.A"
+          ],
+          "dependencies": []
+        },
+        "F_B": {
+          "concept_groups": [
+            "CURRENT_ADVERTISING"
+          ],
+          "source_fields": [
+            "current.advertised.B"
+          ],
+          "dependencies": []
+        },
+        "F_C": {
+          "concept_groups": [
+            "CURRENT_ADVERTISING"
+          ],
+          "source_fields": [
+            "current.advertised.C"
+          ],
+          "dependencies": []
+        },
+        "F_D": {
+          "concept_groups": [
+            "CURRENT_ADVERTISING"
+          ],
+          "source_fields": [
+            "current.advertised.D"
+          ],
+          "dependencies": []
+        },
+        "H1": {
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "source_fields": [
+            "H1.purchased",
+            "H1.prices.A",
+            "H1.prices.B",
+            "H1.prices.C",
+            "H1.prices.D",
+            "H1.advertised.A",
+            "H1.advertised.B",
+            "H1.advertised.C",
+            "H1.advertised.D"
+          ],
+          "dependencies": []
+        },
+        "H2": {
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "source_fields": [
+            "H2.purchased",
+            "H2.prices.A",
+            "H2.prices.B",
+            "H2.prices.C",
+            "H2.prices.D",
+            "H2.advertised.A",
+            "H2.advertised.B",
+            "H2.advertised.C",
+            "H2.advertised.D"
+          ],
+          "dependencies": []
+        },
+        "H3": {
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "source_fields": [
+            "H3.purchased",
+            "H3.prices.A",
+            "H3.prices.B",
+            "H3.prices.C",
+            "H3.prices.D",
+            "H3.advertised.A",
+            "H3.advertised.B",
+            "H3.advertised.C",
+            "H3.advertised.D"
+          ],
+          "dependencies": []
+        },
+        "H4": {
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "source_fields": [
+            "H4.purchased",
+            "H4.prices.A",
+            "H4.prices.B",
+            "H4.prices.C",
+            "H4.prices.D",
+            "H4.advertised.A",
+            "H4.advertised.B",
+            "H4.advertised.C",
+            "H4.advertised.D"
+          ],
+          "dependencies": []
+        },
+        "H5": {
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "source_fields": [
+            "H5.purchased",
+            "H5.prices.A",
+            "H5.prices.B",
+            "H5.prices.C",
+            "H5.prices.D",
+            "H5.advertised.A",
+            "H5.advertised.B",
+            "H5.advertised.C",
+            "H5.advertised.D"
+          ],
+          "dependencies": []
+        }
+      }
+    },
+    "parsed_annotations": {
+      "claims": [
+        {
+          "claim_id": "C1",
+          "exact_quote": "The customer purchased a product with a price of $5.00.",
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "relationship_type": "other_or_unclear",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "P_B"
+          ],
+          "source_fields": [
+            "current.prices.B"
+          ],
+          "factual_status": "unsupported_by_supplied_information",
+          "annotation_note": "Presented as an opening premise in the rationale, but the current $5.00 offer for B does not establish that the customer purchased a product at that price."
+        },
+        {
+          "claim_id": "C2",
+          "exact_quote": "This is the lowest price among the available options.",
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "relationship_type": "current_price_comparison",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [
+              "B"
+            ],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "P_A",
+            "P_B",
+            "P_C",
+            "P_D"
+          ],
+          "source_fields": [
+            "current.prices.A",
+            "current.prices.B",
+            "current.prices.C",
+            "current.prices.D"
+          ],
+          "factual_status": "supported",
+          "annotation_note": "The displayed prices are A $8.10, B $5.00, C $8.10, and D $10.80; B is uniquely lowest. In context, this comparison contributes to the rationale for B."
+        },
+        {
+          "claim_id": "C3",
+          "exact_quote": "The customer's previous purchases (H1, H2, H3, H4, H5) also included a $5.00 purchase for product B.",
+          "concept_groups": [
+            "HOUSEHOLD_HISTORY"
+          ],
+          "relationship_type": "historical_price_purchase_relationship",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [
+              "B"
+            ],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5"
+          ],
+          "source_fields": [
+            "H1.purchased",
+            "H1.prices.B",
+            "H2.purchased",
+            "H2.prices.B",
+            "H3.purchased",
+            "H3.prices.B",
+            "H4.purchased",
+            "H4.prices.B",
+            "H5.purchased",
+            "H5.prices.B"
+          ],
+          "factual_status": "contradicted",
+          "annotation_note": "All five records say the household purchased A. B was offered at $5.00 in H2, H4, and H5, but those records do not show purchases of B."
+        },
+        {
+          "claim_id": "C4",
+          "exact_quote": "The lowest price for product B is $5.00",
+          "concept_groups": [
+            "CURRENT_PRICES"
+          ],
+          "relationship_type": "current_price_comparison",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [
+              "B"
+            ],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "P_A",
+            "P_B",
+            "P_C",
+            "P_D"
+          ],
+          "source_fields": [
+            "current.prices.A",
+            "current.prices.B",
+            "current.prices.C",
+            "current.prices.D"
+          ],
+          "factual_status": "supported",
+          "annotation_note": "B's current displayed price is $5.00, the unique minimum among the available current prices."
+        },
+        {
+          "claim_id": "C5",
+          "exact_quote": "the customer has a history of purchasing product B at this price.",
+          "concept_groups": [
+            "CURRENT_PRICES",
+            "HOUSEHOLD_HISTORY"
+          ],
+          "relationship_type": "historical_price_purchase_relationship",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [
+              "B"
+            ],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "P_B",
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5"
+          ],
+          "source_fields": [
+            "current.prices.B",
+            "H1.purchased",
+            "H1.prices.B",
+            "H2.purchased",
+            "H2.prices.B",
+            "H3.purchased",
+            "H3.prices.B",
+            "H4.purchased",
+            "H4.prices.B",
+            "H5.purchased",
+            "H5.prices.B"
+          ],
+          "factual_status": "contradicted",
+          "annotation_note": "The current price for B is $5.00, and some historical B offers were also $5.00, but every historical purchase label is A—not B."
+        },
+        {
+          "claim_id": "C6",
+          "exact_quote": "Therefore, it is most likely that the customer purchased product B on this occasion.",
+          "concept_groups": [
+            "CURRENT_PRICES",
+            "HOUSEHOLD_HISTORY"
+          ],
+          "relationship_type": "other_or_unclear",
+          "claimed_role": "contributing",
+          "direction": {
+            "favors": [
+              "B"
+            ],
+            "disfavors": []
+          },
+          "mapped_evidence_ids": [
+            "P_A",
+            "P_B",
+            "P_C",
+            "P_D",
+            "H1",
+            "H2",
+            "H3",
+            "H4",
+            "H5"
+          ],
+          "source_fields": [
+            "current.prices.A",
+            "current.prices.B",
+            "current.prices.C",
+            "current.prices.D",
+            "H1.purchased",
+            "H1.prices.B",
+            "H2.purchased",
+            "H2.prices.B",
+            "H3.purchased",
+            "H3.prices.B",
+            "H4.purchased",
+            "H4.prices.B",
+            "H5.purchased",
+            "H5.prices.B"
+          ],
+          "factual_status": "unsupported_by_supplied_information",
+          "annotation_note": "This is the response's probabilistic prediction for B. The actual purchase on this occasion is not supplied; the explanation's historical-purchase premise is contradicted by the records."
+        }
+      ]
+    },
+    "parsed_rule_annotations": [
+      {
+        "rule_id": "R1",
+        "exact_quote": "The lowest price for product B is $5.00, and the customer has a history of purchasing product B at this price. Therefore, it is most likely that the customer purchased product B on this occasion.",
+        "claim_ids": [
+          "C4",
+          "C5",
+          "C6"
+        ],
+        "explicit": true,
+        "sufficiently_specified": true,
+        "concept_groups": [
+          "CURRENT_PRICES",
+          "HOUSEHOLD_HISTORY"
+        ],
+        "scope": "mixed_information_groups",
+        "scope_note": "The stated rationale combines the current price for B with a claimed historical purchase of B at that price.",
+        "conditions": [
+          "B has the lowest current displayed price at $5.00.",
+          "The customer previously purchased B at $5.00."
+        ],
+        "rule_type": "other_explicit_rule",
+        "premise_claim_ids": [
+          "C4",
+          "C5"
+        ],
+        "factual_premises_status": "invalid",
+        "mapped_evidence_ids": [
+          "P_A",
+          "P_B",
+          "P_C",
+          "P_D",
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5"
+        ],
+        "source_fields": [
+          "current.prices.A",
+          "current.prices.B",
+          "current.prices.C",
+          "current.prices.D",
+          "H1.purchased",
+          "H1.prices.B",
+          "H2.purchased",
+          "H2.prices.B",
+          "H3.purchased",
+          "H3.prices.B",
+          "H4.purchased",
+          "H4.prices.B",
+          "H5.purchased",
+          "H5.prices.B"
+        ],
+        "expected_original_candidate": "B",
+        "eligible_for_counterfactual_testing": false,
+        "eligibility_reason": "The historical-purchase premise is contradicted: every supplied support purchase is A. Also, the rule says B is 'most likely' rather than specifying a rule that implies a unique product."
+      }
+    ],
+    "model_reported_coverage": {
+      "all_substantive_claims_addressed": true,
+      "omitted_quotes": [],
+      "notes": "Claims are separated into factual premises and the final probabilistic prediction. The price comparison is supported; the asserted historical B purchases are not."
+    },
+    "raw_annotation_response": "{\n  \"claims\": [\n    {\n      \"claim_id\": \"C1\",\n      \"exact_quote\": \"The customer purchased a product with a price of $5.00.\",\n      \"concept_groups\": [\"CURRENT_PRICES\"],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"P_B\"],\n      \"source_fields\": [\"current.prices.B\"],\n      \"factual_status\": \"unsupported_by_supplied_information\",\n      \"annotation_note\": \"Presented as an opening premise in the rationale, but the current $5.00 offer for B does not establish that the customer purchased a product at that price.\"\n    },\n    {\n      \"claim_id\": \"C2\",\n      \"exact_quote\": \"This is the lowest price among the available options.\",\n      \"concept_groups\": [\"CURRENT_PRICES\"],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\"B\"],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"P_A\", \"P_B\", \"P_C\", \"P_D\"],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"The displayed prices are A $8.10, B $5.00, C $8.10, and D $10.80; B is uniquely lowest. In context, this comparison contributes to the rationale for B.\"\n    },\n    {\n      \"claim_id\": \"C3\",\n      \"exact_quote\": \"The customer's previous purchases (H1, H2, H3, H4, H5) also included a $5.00 purchase for product B.\",\n      \"concept_groups\": [\"HOUSEHOLD_HISTORY\"],\n      \"relationship_type\": \"historical_price_purchase_relationship\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\"B\"],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"H1\", \"H2\", \"H3\", \"H4\", \"H5\"],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H1.prices.B\",\n        \"H2.purchased\",\n        \"H2.prices.B\",\n        \"H3.purchased\",\n        \"H3.prices.B\",\n        \"H4.purchased\",\n        \"H4.prices.B\",\n        \"H5.purchased\",\n        \"H5.prices.B\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"All five records say the household purchased A. B was offered at $5.00 in H2, H4, and H5, but those records do not show purchases of B.\"\n    },\n    {\n      \"claim_id\": \"C4\",\n      \"exact_quote\": \"The lowest price for product B is $5.00\",\n      \"concept_groups\": [\"CURRENT_PRICES\"],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\"B\"],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"P_A\", \"P_B\", \"P_C\", \"P_D\"],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"B's current displayed price is $5.00, the unique minimum among the available current prices.\"\n    },\n    {\n      \"claim_id\": \"C5\",\n      \"exact_quote\": \"the customer has a history of purchasing product B at this price.\",\n      \"concept_groups\": [\"CURRENT_PRICES\", \"HOUSEHOLD_HISTORY\"],\n      \"relationship_type\": \"historical_price_purchase_relationship\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\"B\"],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"P_B\", \"H1\", \"H2\", \"H3\", \"H4\", \"H5\"],\n      \"source_fields\": [\n        \"current.prices.B\",\n        \"H1.purchased\",\n        \"H1.prices.B\",\n        \"H2.purchased\",\n        \"H2.prices.B\",\n        \"H3.purchased\",\n        \"H3.prices.B\",\n        \"H4.purchased\",\n        \"H4.prices.B\",\n        \"H5.purchased\",\n        \"H5.prices.B\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"The current price for B is $5.00, and some historical B offers were also $5.00, but every historical purchase label is A—not B.\"\n    },\n    {\n      \"claim_id\": \"C6\",\n      \"exact_quote\": \"Therefore, it is most likely that the customer purchased product B on this occasion.\",\n      \"concept_groups\": [\"CURRENT_PRICES\", \"HOUSEHOLD_HISTORY\"],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\"B\"],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\"P_A\", \"P_B\", \"P_C\", \"P_D\", \"H1\", \"H2\", \"H3\", \"H4\", \"H5\"],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\",\n        \"H1.purchased\",\n        \"H1.prices.B\",\n        \"H2.purchased\",\n        \"H2.prices.B\",\n        \"H3.purchased\",\n        \"H3.prices.B\",\n        \"H4.purchased\",\n        \"H4.prices.B\",\n        \"H5.purchased\",\n        \"H5.prices.B\"\n      ],\n      \"factual_status\": \"unsupported_by_supplied_information\",\n      \"annotation_note\": \"This is the response's probabilistic prediction for B. The actual purchase on this occasion is not supplied; the explanation's historical-purchase premise is contradicted by the records.\"\n    }\n  ],\n  \"rules\": [\n    {\n      \"rule_id\": \"R1\",\n      \"exact_quote\": \"The lowest price for product B is $5.00, and the customer has a history of purchasing product B at this price. Therefore, it is most likely that the customer purchased product B on this occasion.\",\n      \"claim_ids\": [\"C4\", \"C5\", \"C6\"],\n      \"explicit\": true,\n      \"sufficiently_specified\": true,\n      \"concept_groups\": [\"CURRENT_PRICES\", \"HOUSEHOLD_HISTORY\"],\n      \"scope\": \"mixed_information_groups\",\n      \"scope_note\": \"The stated rationale combines the current price for B with a claimed historical purchase of B at that price.\",\n      \"conditions\": [\n        \"B has the lowest current displayed price at $5.00.\",\n        \"The customer previously purchased B at $5.00.\"\n      ],\n      \"rule_type\": \"other_explicit_rule\",\n      \"premise_claim_ids\": [\"C4\", \"C5\"],\n      \"factual_premises_status\": \"invalid\",\n      \"mapped_evidence_ids\": [\"P_A\", \"P_B\", \"P_C\", \"P_D\", \"H1\", \"H2\", \"H3\", \"H4\", \"H5\"],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\",\n        \"H1.purchased\",\n        \"H1.prices.B\",\n        \"H2.purchased\",\n        \"H2.prices.B\",\n        \"H3.purchased\",\n        \"H3.prices.B\",\n        \"H4.purchased\",\n        \"H4.prices.B\",\n        \"H5.purchased\",\n        \"H5.prices.B\"\n      ],\n      \"expected_original_candidate\": \"B\",\n      \"eligible_for_counterfactual_testing\": false,\n      \"eligibility_reason\": \"The historical-purchase premise is contradicted: every supplied support purchase is A. Also, the rule says B is 'most likely' rather than specifying a rule that implies a unique product.\"\n    }\n  ],\n  \"coverage\": {\n    \"all_substantive_claims_addressed\": true,\n    \"omitted_quotes\": [],\n    \"notes\": \"Claims are separated into factual premises and the final probabilistic prediction. The price comparison is supported; the asserted historical B purchases are not.\"\n  }\n}",
+    "diagnostics": {
+      "parse_ok": true,
+      "schema_and_traceability_ok": true,
+      "issues": [],
+      "warnings": [],
+      "claim_checks": [
+        {
+          "index": 0,
+          "claim_id": "C1",
+          "issues": [],
+          "warnings": []
+        },
+        {
+          "index": 1,
+          "claim_id": "C2",
+          "issues": [],
+          "warnings": []
+        },
+        {
+          "index": 2,
+          "claim_id": "C3",
+          "issues": [],
+          "warnings": []
+        },
+        {
+          "index": 3,
+          "claim_id": "C4",
+          "issues": [],
+          "warnings": []
+        },
+        {
+          "index": 4,
+          "claim_id": "C5",
+          "issues": [],
+          "warnings": []
+        },
+        {
+          "index": 5,
+          "claim_id": "C6",
+          "issues": [],
+          "warnings": []
+        }
+      ],
+      "rule_checks": [
+        {
+          "rule_id": "R1",
+          "issues": []
+        }
+      ],
+      "api_completed": true,
+      "generation_truncated": false,
+      "model_identity_matches": true,
+      "model_reports_claim_coverage_complete": true,
+      "semantic_correctness_checked": false,
+      "coverage_verified": false,
+      "faithfulness_assessed": false,
+      "human_reviewed": false
+    },
+    "requested_model": "gpt-6-luna",
+    "returned_model": "gpt-6-luna",
+    "api_response_id": "resp_044d5ad9c8cf0093016ade24911b2087d19c99022118473d03",
+    "usage": {
+      "input_tokens": 5002,
+      "input_tokens_details": {
+        "cache_write_tokens": 1327,
+        "cached_tokens": 3672
+      },
+      "output_tokens": 9798,
+      "output_tokens_details": {
+        "reasoning_tokens": 7907
+      },
+      "total_tokens": 14800
+    },
+    "source_record_path": "choice_study/test_with_history_100_v1/luna_originals_10_v1/records/LUNA10_02__row-196.json",
+    "adapter_note": "Claim labels/quotes/mappings unchanged. Rule objects retained separately; no universal rule or stale label synthesized. Existing metrics may use only original-claim coverage; edited annotations remain absent."
+  }
+}

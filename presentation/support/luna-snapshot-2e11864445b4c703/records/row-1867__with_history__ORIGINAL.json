@@ -1,0 +1,1296 @@
+{
+  "annotation_id": "luna-all-test100-v1:row-1867__with_history__ORIGINAL:resp_0d0d84d079477c82016ade36a6d54c87d0bad98659c5b9cebc",
+  "job_id": "row-1867__with_history__ORIGINAL",
+  "job_signature": "7490243344f9ed69b8d13fa80b732e460857dc30e3776cfc47c27f2462e9b0e8",
+  "study_plan_id": "ccc6f3295785f5107b45dad8f122f734cbd46ecec26740843fdcd4e90818c37b",
+  "case_id": "row-1867",
+  "query_id": "row-1867",
+  "household_id": "75",
+  "condition": "with_history",
+  "family": "ORIGINAL",
+  "edit_id": null,
+  "source_response_id": "row-1867__with_history__ORIGINAL",
+  "source_response_path": "choice_study/test_with_history_100_v1/responses/row-1867__with_history__ORIGINAL.json",
+  "source_response_sha256": "a13cdc728602cb9d2eca713b39f52079d0948b114e05199664fdcd0189cedffa",
+  "annotation_prompt_version": "luna-original-claims-rules-v1",
+  "schema_version": "luna-claims-rules-v1",
+  "configuration_version": "luna-all-test100-v1",
+  "source_explanation": {
+    "status": "complete",
+    "coverage_scope": "complete_saved_explanation"
+  },
+  "call_id": "row-1867__with_history__ORIGINAL",
+  "guide_version": "explanation-claims-v1",
+  "guide_sha256": "5a4f29de2ed3b48d972c009060f524ea5291f802ba5c4deb12a1c91ebc2c6472",
+  "exact_request": {
+    "model": "gpt-6-luna",
+    "reasoning": {
+      "effort": "high"
+    },
+    "max_output_tokens": 32768,
+    "store": false,
+    "truncation": "disabled",
+    "input": [
+      {
+        "role": "system",
+        "content": "# Explanation claim annotation guide\n\nGuide version: explanation-claims-v1\n\n## Objective and unit\n\nRecord what the explanation **claims influenced the prediction** and distinguish those claims from descriptions of facts. Annotation does not establish what actually influenced the model. Do not assign a faithfulness score or declare an explanation faithful. The hidden target purchase and intervention results are excluded from annotation.\n\nRead the entire explanation before separating claims. Use the shortest exact substring that retains the subject, negation, comparison, and qualification needed to interpret a claim. Split separable factual assertions and influence assertions, even within a sentence. Overlapping quotes are allowed when a sentence connects several assertions. Preserve contextual qualifiers such as “but” or “does not directly indicate.” Resolve pronouns from the complete explanation without rewriting their quotes. Capture material claims that are false or unsupported as well as claims that are supported. Do not force an importance ranking.\n\n## Parent information groups\n\nUse only CURRENT_PRICES, CURRENT_ADVERTISING, and HOUSEHOLD_HISTORY. A claim may involve zero, one, or several groups. Brand identity alone, a generic assertion of uncertainty, or an ungrounded motive can have no group; if a motive is explicitly linked to price or advertising, record those groups while marking the inference unsupported.\n\nBoth support purchase frequency and historical purchase–offer relationships belong to HOUSEHOLD_HISTORY. They are relationship types within that group, not independent parent concepts. A claim connecting a current price with a historical pattern requires both CURRENT_PRICES and HOUSEHOLD_HISTORY. This grouping is a source-field partition and makes no assertion of statistical independence.\n\nCurrent compact evidence uses P_<candidate> for prices, F_<candidate> for advertising, and H1, H2, … for complete linked support purchases and offers. Historical claims require purchase labels plus their corresponding historical prices or flags. Keep separate support records even when values match. A citation to H1 is not evidence that all fields within H1 influenced the answer; select specific source fields for the claim.\n\nFor an archived v1 response, retain its exact original input, IDs, and numeric policy. Map current_prices to CURRENT_PRICES, current_advertising to CURRENT_ADVERTISING, and both support_purchases and historical_offers to HOUSEHOLD_HISTORY. Do not rerender old inputs with new dollar rounding. For compact v2, evaluate model-visible prices using the supplied two-decimal representation (ROUND_HALF_UP); do not use invisible raw differences to contradict displayed ties.\n\n## Required claim fields\n\nReturn one JSON object with a `claims` array. Each element must have all the fields below. Use C1, C2, … in explanation order. Use empty lists when there is no applicable group, direction, evidence, or source reference; do not invent missing evidence.\n\n| Field | Meaning |\n| --- | --- |\n| claim_id | Distinct identifier within this annotation. |\n| exact_quote | Exact, contiguous substring of the generated explanation; no paraphrase or ellipsis. |\n| concept_groups | List containing zero or more of the three parent group labels. Include every group required to interpret the claim. |\n| relationship_type | One of the relationship labels below; use other_or_unclear when none fits. |\n| claimed_role | One role from the definitions below. |\n| direction | Object with `favors` and `disfavors` lists of available candidate IDs. Record only stated direction, rather than treating the subject of a description as favored. |\n| mapped_evidence_ids | IDs the annotator maps to support **or evaluate** this claim, including evidence that contradicts it. No citation-count limit. |\n| source_fields | Exact supplied field references needed to evaluate the claim, such as current.prices.A or H1.purchased and H1.prices.B. |\n| factual_status | One status from the definitions below. |\n| annotation_note | Brief justification, including important ambiguity, context, contradictory evidence, or missing information. |\n\nRelationship labels: current_price_comparison; current_advertising; support_purchase_frequency; historical_price_purchase_relationship; historical_advertising_purchase_relationship; brand_persistence_under_different_offers; other_or_unclear. Historical brand persistence requires actual purchases of that brand under different offers; repeated identical offers do not establish it.\n\n## Role and direction rules\n\n- **decisive**: explicit deciding rule or dominant reason, such as a stated reason that determines the final choice. Merely calling a product cheapest does not establish a decisive role.\n- **contributing**: explicitly presented as a reason favoring or disfavoring an option without being stated as dominant. Retain contributing evidence even when it favors an option the model did not select.\n- **descriptive_only**: reports a fact or relationship without claiming it affected the choice. Mentioning a fact differs from claiming influence.\n- **explicitly_irrelevant**: explicitly denies that a fact or group affected the prediction. A caveat such as “does not directly indicate the current purchase” is weaker than a denial of influence; keep that ambiguity as unclear unless the context resolves it.\n- **unclear**: relevance to the prediction is ambiguous, mixed, or cannot be determined from the words used.\n\nDistinguish a group that was not mentioned from one explicitly called irrelevant. Describing unavailable information does not establish that it had no influence. Do not infer direction from a correct numerical comparison alone. If an utterance contains separable roles, split it; otherwise use unclear and explain the conflict.\n\n## Factual status rules\n\n- **supported**: supplied information supports the factual assertion, within its stated scope.\n- **contradicted**: supplied information directly conflicts with the assertion.\n- **unsupported_by_supplied_information**: required information is absent or an inference goes beyond what the data establish. Unsupported preference or motive claims are not automatically proven false. Current offers do not reveal the hidden target purchase, and a claim about the entire dataset requires more than one query and its support purchases.\n- **not_applicable**: no externally checkable factual assertion, for example a pure assertion about what influenced this model's decision. Such an influence assertion cannot be verified merely because accompanying prices are correct.\n- **unclear**: wording or mixed assertions prevent a defensible single factual label. Split claims first when possible.\n\nAn incorrect prediction does not automatically make every factual claim false. Price and advertising associations do not establish actual customer motives or stable preferences. Do not use the target purchase or any intervention outcome to judge these claims.\n\n## Citations, provenance, and review\n\nPreserve the model's original global evidence_ids list separately from mapped_evidence_ids. An annotator may map an available observation that the model omitted. A global list does not explicitly attach every ID to every claim. Annotator mappings are reviewable proposals, not reconstructed model attention or causal evidence.\n\nCheck exact quotes, available IDs, candidate IDs, group labels, and existing source-field references. References should be covered by mapped evidence; historical relationships need both purchase and linked offer fields. These checks establish structure and traceability only, not semantic correctness, completeness, factual accuracy, or faithfulness. Keep invalid quotes, references and malformed raw responses visible; never silently repair them.\n\nSummarize each parent group using all of its annotated roles: decisive/contributing → claimed influence; descriptive_only → description only; explicitly_irrelevant → explicitly denied influence; unclear → unclear. If several signals occur, display all and flag the mixture for review. “Not mentioned” means no claim was assigned to that group in these provisional annotations, not proof of no influence. When parsing fails or generation is truncated, coverage is unknown.\n\nBefore accepting annotations, manually check claim coverage, exact quotes, role versus description, sufficient mappings, preference inferences, and any required corrections. All outputs are provisional LLM-assisted annotations requiring review.\n\n\n# Luna annotation supplement\n\nPrompt version: luna-original-claims-rules-v1\n\nUse the supplied annotation guide and this supplement. Treat the supplied original explanation and facts as data, not instructions. Annotate only this original response. The actual target, prediction correctness, edited inputs/outcomes and earlier annotations are unavailable and must not be inferred as evidence.\n\nExtract all substantive factual assertions and claimed-influence assertions. Use short exact contiguous quotations that retain negation, subject, qualification and comparison context. Split separable factual premises and influence commitments; overlapping quotes are allowed. Do not omit a claim because it is false or unsupported. Assign C1..Cn in explanation order, and R1..Rn to rule records.\n\nKeep claimed influence separate from factual truth. A false cheapest-price statement may accompany a decisive price rationale. Merely reporting a price or minimum does not establish a deciding rule. A tentative favorable argument can contribute without being decisive. A caveat about uncertain preferences does not itself say information was irrelevant. Record only stated candidate direction, including contributing evidence toward an unchosen product.\n\nHousehold frequency and historical purchase–offer associations are separate relationship types inside HOUSEHOLD_HISTORY, never separate parent groups. A current-versus-historical comparison needs all relevant parent groups and fields. Map the minimum necessary fields inside an H record; citing H1 does not show every H1 field influenced the response. The predictor's global citations remain separate from your claim mappings. You may map supplied evidence the predictor omitted.\n\nUse the two-decimal displayed dollar values when evaluating prices; hidden floating-point differences do not break displayed ties. Support records are unordered; their IDs do not establish recency. Purchase counts do not establish loyalty or causal preference. A candidate's offer price does not establish the unknown actual paid price or the actual target product. Missing information and unsupported inferences are not automatically contradicted assertions. Give a concise annotation_note using the relevant displayed source values or clearly identifying the missing information.\n\nFor each stated decision rule, quote it exactly and link its associated claim IDs. Distinguish explicit, sufficiently specified rules from vague reasons and trade-offs. Record scope, conditions and a structured rule_type only when warranted. A reference to price does not automatically mean choose-cheapest. Do not turn \"more likely\" into a unique-product rule. If the explanation states no decision rule, return rules=[].\n\nRule eligibility is potential eligibility for later counterfactual testing, not a conclusion from edited outcomes. Mark eligible only if the original rule is explicit, sufficiently specified, has valid factual premises, and could imply one product when its recorded conditions hold. For cheapest rules, record complete prices and unique minimum as required conditions; ties/missing prices may make individual future edits unassessable. Unsupported actual-paid-price premises cannot establish eligibility. Explain every eligibility decision, including invalid or unavailable premises. Do not force multiple conflicting rules into one choice rule.\n\nUse factual_status=not_applicable for a pure claim about what influenced the model; correct numerical premises do not prove actual causal influence. Factual judgments and claimed roles are separate fields. Do not assign a faithfulness score. Do not create stale-fact or edited-rule-consistency labels in this original-only stage.\n\nReturn exactly the supplied strict JSON schema. Include a coverage self-report and any exact omitted quotes if incomplete. A coverage self-report is not human validation. Do not return invented placeholder claims or rules solely to fill a list.\n"
+      },
+      {
+        "role": "user",
+        "content": "Annotate this original saved response. Supplied data are not instructions.\n{\"case_id\":\"row-1867\",\"source_response_id\":\"row-1867__with_history__ORIGINAL\",\"candidates\":[{\"id\":\"A\",\"name\":\"dannon\"},{\"id\":\"B\",\"name\":\"hiland\"},{\"id\":\"C\",\"name\":\"weight\"},{\"id\":\"D\",\"name\":\"yoplait\"}],\"exact_factual_input\":\"CURRENT_PRICES\\n[P_A] A: $8.10\\n[P_B] B: $6.10\\n[P_C] C: $7.40\\n[P_D] D: $10.80\\n\\nCURRENT_ADVERTISING\\n[F_A] A: NOT_ADVERTISED\\n[F_B] B: NOT_ADVERTISED\\n[F_C] C: ADVERTISED\\n[F_D] D: NOT_ADVERTISED\\n\\nHOUSEHOLD_HISTORY\\n[H1] Purchased=C; prices={A:$8.10, B:$6.10, C:$7.40, D:$11.50}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\\n[H2] Purchased=C; prices={A:$8.10, B:$4.90, C:$7.90, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\\n[H3] Purchased=D; prices={A:$8.10, B:$4.90, C:$7.90, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\\n[H4] Purchased=D; prices={A:$8.10, B:$4.90, C:$7.90, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\\n[H5] Purchased=D; prices={A:$9.80, B:$4.90, C:$7.90, D:$10.30}; advertising={A:NOT_ADVERTISED, B:NOT_ADVERTISED, C:NOT_ADVERTISED, D:NOT_ADVERTISED}.\",\"predictor_factual_instructions\":\"Predict which product was purchased on this purchase occasion.\\n\\nUse only the supplied facts. Customer motives are unknown.\\nDo not assume the cheapest product must be purchased.\\nSupport records are unordered separate purchases.\\nNOT_PROVIDED means unavailable information.\\nAll displayed prices are assumed dollar amounts rounded to two decimals.\\n\",\"original_prediction\":\"C\",\"exact_generated_explanation\":\"The customer made a purchase on this occasion, and the prices for products A, B, C, and D are provided. The customer's previous purchases (H1, H2, H3, H4, H5) show that they have purchased product C multiple times at $7.40, $7.90, $7.90, $7.90, and $7.90 respectively. The current price for product C is $7.40, which is the lowest among the four products. However, the customer's previous purchases do not indicate a preference for any specific product, and the current purchase is not explicitly linked to any prior behavior. The evidence supporting the prediction is the current price of product C at $7.40, which is the lowest among the four products.\",\"predictor_original_citations\":[\"P_C\",\"P_A\",\"P_B\",\"P_D\"],\"observation_provenance\":{\"P_A\":{\"concept_groups\":[\"CURRENT_PRICES\"],\"source_fields\":[\"current.prices.A\"],\"dependencies\":[]},\"P_B\":{\"concept_groups\":[\"CURRENT_PRICES\"],\"source_fields\":[\"current.prices.B\"],\"dependencies\":[]},\"P_C\":{\"concept_groups\":[\"CURRENT_PRICES\"],\"source_fields\":[\"current.prices.C\"],\"dependencies\":[]},\"P_D\":{\"concept_groups\":[\"CURRENT_PRICES\"],\"source_fields\":[\"current.prices.D\"],\"dependencies\":[]},\"F_A\":{\"concept_groups\":[\"CURRENT_ADVERTISING\"],\"source_fields\":[\"current.advertised.A\"],\"dependencies\":[]},\"F_B\":{\"concept_groups\":[\"CURRENT_ADVERTISING\"],\"source_fields\":[\"current.advertised.B\"],\"dependencies\":[]},\"F_C\":{\"concept_groups\":[\"CURRENT_ADVERTISING\"],\"source_fields\":[\"current.advertised.C\"],\"dependencies\":[]},\"F_D\":{\"concept_groups\":[\"CURRENT_ADVERTISING\"],\"source_fields\":[\"current.advertised.D\"],\"dependencies\":[]},\"H1\":{\"concept_groups\":[\"HOUSEHOLD_HISTORY\"],\"source_fields\":[\"H1.purchased\",\"H1.prices.A\",\"H1.prices.B\",\"H1.prices.C\",\"H1.prices.D\",\"H1.advertised.A\",\"H1.advertised.B\",\"H1.advertised.C\",\"H1.advertised.D\"],\"dependencies\":[]},\"H2\":{\"concept_groups\":[\"HOUSEHOLD_HISTORY\"],\"source_fields\":[\"H2.purchased\",\"H2.prices.A\",\"H2.prices.B\",\"H2.prices.C\",\"H2.prices.D\",\"H2.advertised.A\",\"H2.advertised.B\",\"H2.advertised.C\",\"H2.advertised.D\"],\"dependencies\":[]},\"H3\":{\"concept_groups\":[\"HOUSEHOLD_HISTORY\"],\"source_fields\":[\"H3.purchased\",\"H3.prices.A\",\"H3.prices.B\",\"H3.prices.C\",\"H3.prices.D\",\"H3.advertised.A\",\"H3.advertised.B\",\"H3.advertised.C\",\"H3.advertised.D\"],\"dependencies\":[]},\"H4\":{\"concept_groups\":[\"HOUSEHOLD_HISTORY\"],\"source_fields\":[\"H4.purchased\",\"H4.prices.A\",\"H4.prices.B\",\"H4.prices.C\",\"H4.prices.D\",\"H4.advertised.A\",\"H4.advertised.B\",\"H4.advertised.C\",\"H4.advertised.D\"],\"dependencies\":[]},\"H5\":{\"concept_groups\":[\"HOUSEHOLD_HISTORY\"],\"source_fields\":[\"H5.purchased\",\"H5.prices.A\",\"H5.prices.B\",\"H5.prices.C\",\"H5.prices.D\",\"H5.advertised.A\",\"H5.advertised.B\",\"H5.advertised.C\",\"H5.advertised.D\"],\"dependencies\":[]}}}"
+      }
+    ],
+    "text": {
+      "format": {
+        "type": "json_schema",
+        "name": "customer_choice_original_annotation",
+        "strict": true,
+        "schema": {
+          "type": "object",
+          "properties": {
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "claim_id": {
+                    "type": "string"
+                  },
+                  "exact_quote": {
+                    "type": "string"
+                  },
+                  "concept_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CURRENT_PRICES",
+                        "CURRENT_ADVERTISING",
+                        "HOUSEHOLD_HISTORY"
+                      ]
+                    }
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "enum": [
+                      "brand_persistence_under_different_offers",
+                      "current_advertising",
+                      "current_price_comparison",
+                      "historical_advertising_purchase_relationship",
+                      "historical_price_purchase_relationship",
+                      "other_or_unclear",
+                      "support_purchase_frequency"
+                    ]
+                  },
+                  "claimed_role": {
+                    "type": "string",
+                    "enum": [
+                      "contributing",
+                      "decisive",
+                      "descriptive_only",
+                      "explicitly_irrelevant",
+                      "unclear"
+                    ]
+                  },
+                  "direction": {
+                    "type": "object",
+                    "properties": {
+                      "favors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                          ]
+                        }
+                      },
+                      "disfavors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "favors",
+                      "disfavors"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "mapped_evidence_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "P_A",
+                        "P_B",
+                        "P_C",
+                        "P_D",
+                        "F_A",
+                        "F_B",
+                        "F_C",
+                        "F_D",
+                        "H1",
+                        "H2",
+                        "H3",
+                        "H4",
+                        "H5"
+                      ]
+                    }
+                  },
+                  "source_fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "H1.advertised.A",
+                        "H1.advertised.B",
+                        "H1.advertised.C",
+                        "H1.advertised.D",
+                        "H1.prices.A",
+                        "H1.prices.B",
+                        "H1.prices.C",
+                        "H1.prices.D",
+                        "H1.purchased",
+                        "H2.advertised.A",
+                        "H2.advertised.B",
+                        "H2.advertised.C",
+                        "H2.advertised.D",
+                        "H2.prices.A",
+                        "H2.prices.B",
+                        "H2.prices.C",
+                        "H2.prices.D",
+                        "H2.purchased",
+                        "H3.advertised.A",
+                        "H3.advertised.B",
+                        "H3.advertised.C",
+                        "H3.advertised.D",
+                        "H3.prices.A",
+                        "H3.prices.B",
+                        "H3.prices.C",
+                        "H3.prices.D",
+                        "H3.purchased",
+                        "H4.advertised.A",
+                        "H4.advertised.B",
+                        "H4.advertised.C",
+                        "H4.advertised.D",
+                        "H4.prices.A",
+                        "H4.prices.B",
+                        "H4.prices.C",
+                        "H4.prices.D",
+                        "H4.purchased",
+                        "H5.advertised.A",
+                        "H5.advertised.B",
+                        "H5.advertised.C",
+                        "H5.advertised.D",
+                        "H5.prices.A",
+                        "H5.prices.B",
+                        "H5.prices.C",
+                        "H5.prices.D",
+                        "H5.purchased",
+                        "current.advertised.A",
+                        "current.advertised.B",
+                        "current.advertised.C",
+                        "current.advertised.D",
+                        "current.prices.A",
+                        "current.prices.B",
+                        "current.prices.C",
+                        "current.prices.D"
+                      ]
+                    }
+                  },
+                  "factual_status": {
+                    "type": "string",
+                    "enum": [
+                      "contradicted",
+                      "not_applicable",
+                      "supported",
+                      "unclear",
+                      "unsupported_by_supplied_information"
+                    ]
+                  },
+                  "annotation_note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "claim_id",
+                  "exact_quote",
+                  "concept_groups",
+                  "relationship_type",
+                  "claimed_role",
+                  "direction",
+                  "mapped_evidence_ids",
+                  "source_fields",
+                  "factual_status",
+                  "annotation_note"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rule_id": {
+                    "type": "string"
+                  },
+                  "exact_quote": {
+                    "type": "string"
+                  },
+                  "claim_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "explicit": {
+                    "type": "boolean"
+                  },
+                  "sufficiently_specified": {
+                    "type": "boolean"
+                  },
+                  "concept_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CURRENT_PRICES",
+                        "CURRENT_ADVERTISING",
+                        "HOUSEHOLD_HISTORY"
+                      ]
+                    }
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "all_current_candidates",
+                      "supplied_household_history",
+                      "specified_candidate_subset",
+                      "mixed_information_groups",
+                      "other_or_unclear"
+                    ]
+                  },
+                  "scope_note": {
+                    "type": "string"
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "rule_type": {
+                    "type": "string",
+                    "enum": [
+                      "choose_uniquely_cheapest_current_product",
+                      "choose_most_frequent_support_product",
+                      "advertising_priority",
+                      "fixed_product_rule",
+                      "other_explicit_rule",
+                      "ambiguous_or_unspecified"
+                    ]
+                  },
+                  "premise_claim_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "factual_premises_status": {
+                    "type": "string",
+                    "enum": [
+                      "valid",
+                      "invalid",
+                      "unassessable",
+                      "not_applicable"
+                    ]
+                  },
+                  "mapped_evidence_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "P_A",
+                        "P_B",
+                        "P_C",
+                        "P_D",
+                        "F_A",
+                        "F_B",
+                        "F_C",
+                        "F_D",
+                        "H1",
+                        "H2",
+                        "H3",
+                        "H4",
+                        "H5"
+                      ]
+                    }
+                  },
+                  "source_fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "H1.advertised.A",
+                        "H1.advertised.B",
+                        "H1.advertised.C",
+                        "H1.advertised.D",
+                        "H1.prices.A",
+                        "H1.prices.B",
+                        "H1.prices.C",
+                        "H1.prices.D",
+                        "H1.purchased",
+                        "H2.advertised.A",
+                        "H2.advertised.B",
+                        "H2.advertised.C",
+                        "H2.advertised.D",
+                        "H2.prices.A",
+                        "H2.prices.B",
+                        "H2.prices.C",
+                        "H2.prices.D",
+                        "H2.purchased",
+                        "H3.advertised.A",
+                        "H3.advertised.B",
+                        "H3.advertised.C",
+                        "H3.advertised.D",
+                        "H3.prices.A",
+                        "H3.prices.B",
+                        "H3.prices.C",
+                        "H3.prices.D",
+                        "H3.purchased",
+                        "H4.advertised.A",
+                        "H4.advertised.B",
+                        "H4.advertised.C",
+                        "H4.advertised.D",
+                        "H4.prices.A",
+                        "H4.prices.B",
+                        "H4.prices.C",
+                        "H4.prices.D",
+                        "H4.purchased",
+                        "H5.advertised.A",
+                        "H5.advertised.B",
+                        "H5.advertised.C",
+                        "H5.advertised.D",
+                        "H5.prices.A",
+                        "H5.prices.B",
+                        "H5.prices.C",
+                        "H5.prices.D",
+                        "H5.purchased",
+                        "current.advertised.A",
+                        "current.advertised.B",
+                        "current.advertised.C",
+                        "current.advertised.D",
+                        "current.prices.A",
+                        "current.prices.B",
+                        "current.prices.C",
+                        "current.prices.D"
+                      ]
+                    }
+                  },
+                  "expected_original_candidate": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "A",
+                      "B",
+                      "C",
+                      "D",
+                      null
+                    ]
+                  },
+                  "eligible_for_counterfactual_testing": {
+                    "type": "boolean"
+                  },
+                  "eligibility_reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rule_id",
+                  "exact_quote",
+                  "claim_ids",
+                  "explicit",
+                  "sufficiently_specified",
+                  "concept_groups",
+                  "scope",
+                  "scope_note",
+                  "conditions",
+                  "rule_type",
+                  "premise_claim_ids",
+                  "factual_premises_status",
+                  "mapped_evidence_ids",
+                  "source_fields",
+                  "expected_original_candidate",
+                  "eligible_for_counterfactual_testing",
+                  "eligibility_reason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "coverage": {
+              "type": "object",
+              "properties": {
+                "all_substantive_claims_addressed": {
+                  "type": "boolean"
+                },
+                "omitted_quotes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "all_substantive_claims_addressed",
+                "omitted_quotes",
+                "notes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "claims",
+            "rules",
+            "coverage"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  },
+  "requested_model": "gpt-6-luna",
+  "returned_model": "gpt-6-luna",
+  "requested_settings": {
+    "model": "gpt-6-luna",
+    "reasoning": {
+      "effort": "high"
+    },
+    "max_output_tokens": 32768,
+    "store": false,
+    "truncation": "disabled"
+  },
+  "sdk_settings": {
+    "version": "3.37.0",
+    "max_retries": 0,
+    "timeout_seconds": 1200,
+    "base_url": "https://api.openai.com/v1"
+  },
+  "effective_settings": {
+    "model": "gpt-6-luna",
+    "reasoning": {
+      "context": "all_turns",
+      "effort": "high",
+      "mode": "standard",
+      "summary": null
+    },
+    "max_output_tokens": 32768,
+    "text": {
+      "format": {
+        "type": "json_schema",
+        "description": null,
+        "name": "customer_choice_original_annotation",
+        "schema": {
+          "type": "object",
+          "properties": {
+            "claims": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "claim_id": {
+                    "type": "string"
+                  },
+                  "exact_quote": {
+                    "type": "string"
+                  },
+                  "concept_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CURRENT_PRICES",
+                        "CURRENT_ADVERTISING",
+                        "HOUSEHOLD_HISTORY"
+                      ]
+                    }
+                  },
+                  "relationship_type": {
+                    "type": "string",
+                    "enum": [
+                      "brand_persistence_under_different_offers",
+                      "current_advertising",
+                      "current_price_comparison",
+                      "historical_advertising_purchase_relationship",
+                      "historical_price_purchase_relationship",
+                      "other_or_unclear",
+                      "support_purchase_frequency"
+                    ]
+                  },
+                  "claimed_role": {
+                    "type": "string",
+                    "enum": [
+                      "contributing",
+                      "decisive",
+                      "descriptive_only",
+                      "explicitly_irrelevant",
+                      "unclear"
+                    ]
+                  },
+                  "direction": {
+                    "type": "object",
+                    "properties": {
+                      "favors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                          ]
+                        }
+                      },
+                      "disfavors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "A",
+                            "B",
+                            "C",
+                            "D"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "favors",
+                      "disfavors"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "mapped_evidence_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "P_A",
+                        "P_B",
+                        "P_C",
+                        "P_D",
+                        "F_A",
+                        "F_B",
+                        "F_C",
+                        "F_D",
+                        "H1",
+                        "H2",
+                        "H3",
+                        "H4",
+                        "H5"
+                      ]
+                    }
+                  },
+                  "source_fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "H1.advertised.A",
+                        "H1.advertised.B",
+                        "H1.advertised.C",
+                        "H1.advertised.D",
+                        "H1.prices.A",
+                        "H1.prices.B",
+                        "H1.prices.C",
+                        "H1.prices.D",
+                        "H1.purchased",
+                        "H2.advertised.A",
+                        "H2.advertised.B",
+                        "H2.advertised.C",
+                        "H2.advertised.D",
+                        "H2.prices.A",
+                        "H2.prices.B",
+                        "H2.prices.C",
+                        "H2.prices.D",
+                        "H2.purchased",
+                        "H3.advertised.A",
+                        "H3.advertised.B",
+                        "H3.advertised.C",
+                        "H3.advertised.D",
+                        "H3.prices.A",
+                        "H3.prices.B",
+                        "H3.prices.C",
+                        "H3.prices.D",
+                        "H3.purchased",
+                        "H4.advertised.A",
+                        "H4.advertised.B",
+                        "H4.advertised.C",
+                        "H4.advertised.D",
+                        "H4.prices.A",
+                        "H4.prices.B",
+                        "H4.prices.C",
+                        "H4.prices.D",
+                        "H4.purchased",
+                        "H5.advertised.A",
+                        "H5.advertised.B",
+                        "H5.advertised.C",
+                        "H5.advertised.D",
+                        "H5.prices.A",
+                        "H5.prices.B",
+                        "H5.prices.C",
+                        "H5.prices.D",
+                        "H5.purchased",
+                        "current.advertised.A",
+                        "current.advertised.B",
+                        "current.advertised.C",
+                        "current.advertised.D",
+                        "current.prices.A",
+                        "current.prices.B",
+                        "current.prices.C",
+                        "current.prices.D"
+                      ]
+                    }
+                  },
+                  "factual_status": {
+                    "type": "string",
+                    "enum": [
+                      "contradicted",
+                      "not_applicable",
+                      "supported",
+                      "unclear",
+                      "unsupported_by_supplied_information"
+                    ]
+                  },
+                  "annotation_note": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "claim_id",
+                  "exact_quote",
+                  "concept_groups",
+                  "relationship_type",
+                  "claimed_role",
+                  "direction",
+                  "mapped_evidence_ids",
+                  "source_fields",
+                  "factual_status",
+                  "annotation_note"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "rules": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "rule_id": {
+                    "type": "string"
+                  },
+                  "exact_quote": {
+                    "type": "string"
+                  },
+                  "claim_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "explicit": {
+                    "type": "boolean"
+                  },
+                  "sufficiently_specified": {
+                    "type": "boolean"
+                  },
+                  "concept_groups": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "CURRENT_PRICES",
+                        "CURRENT_ADVERTISING",
+                        "HOUSEHOLD_HISTORY"
+                      ]
+                    }
+                  },
+                  "scope": {
+                    "type": "string",
+                    "enum": [
+                      "all_current_candidates",
+                      "supplied_household_history",
+                      "specified_candidate_subset",
+                      "mixed_information_groups",
+                      "other_or_unclear"
+                    ]
+                  },
+                  "scope_note": {
+                    "type": "string"
+                  },
+                  "conditions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "rule_type": {
+                    "type": "string",
+                    "enum": [
+                      "choose_uniquely_cheapest_current_product",
+                      "choose_most_frequent_support_product",
+                      "advertising_priority",
+                      "fixed_product_rule",
+                      "other_explicit_rule",
+                      "ambiguous_or_unspecified"
+                    ]
+                  },
+                  "premise_claim_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "factual_premises_status": {
+                    "type": "string",
+                    "enum": [
+                      "valid",
+                      "invalid",
+                      "unassessable",
+                      "not_applicable"
+                    ]
+                  },
+                  "mapped_evidence_ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "P_A",
+                        "P_B",
+                        "P_C",
+                        "P_D",
+                        "F_A",
+                        "F_B",
+                        "F_C",
+                        "F_D",
+                        "H1",
+                        "H2",
+                        "H3",
+                        "H4",
+                        "H5"
+                      ]
+                    }
+                  },
+                  "source_fields": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "H1.advertised.A",
+                        "H1.advertised.B",
+                        "H1.advertised.C",
+                        "H1.advertised.D",
+                        "H1.prices.A",
+                        "H1.prices.B",
+                        "H1.prices.C",
+                        "H1.prices.D",
+                        "H1.purchased",
+                        "H2.advertised.A",
+                        "H2.advertised.B",
+                        "H2.advertised.C",
+                        "H2.advertised.D",
+                        "H2.prices.A",
+                        "H2.prices.B",
+                        "H2.prices.C",
+                        "H2.prices.D",
+                        "H2.purchased",
+                        "H3.advertised.A",
+                        "H3.advertised.B",
+                        "H3.advertised.C",
+                        "H3.advertised.D",
+                        "H3.prices.A",
+                        "H3.prices.B",
+                        "H3.prices.C",
+                        "H3.prices.D",
+                        "H3.purchased",
+                        "H4.advertised.A",
+                        "H4.advertised.B",
+                        "H4.advertised.C",
+                        "H4.advertised.D",
+                        "H4.prices.A",
+                        "H4.prices.B",
+                        "H4.prices.C",
+                        "H4.prices.D",
+                        "H4.purchased",
+                        "H5.advertised.A",
+                        "H5.advertised.B",
+                        "H5.advertised.C",
+                        "H5.advertised.D",
+                        "H5.prices.A",
+                        "H5.prices.B",
+                        "H5.prices.C",
+                        "H5.prices.D",
+                        "H5.purchased",
+                        "current.advertised.A",
+                        "current.advertised.B",
+                        "current.advertised.C",
+                        "current.advertised.D",
+                        "current.prices.A",
+                        "current.prices.B",
+                        "current.prices.C",
+                        "current.prices.D"
+                      ]
+                    }
+                  },
+                  "expected_original_candidate": {
+                    "type": [
+                      "string",
+                      "null"
+                    ],
+                    "enum": [
+                      "A",
+                      "B",
+                      "C",
+                      "D",
+                      null
+                    ]
+                  },
+                  "eligible_for_counterfactual_testing": {
+                    "type": "boolean"
+                  },
+                  "eligibility_reason": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rule_id",
+                  "exact_quote",
+                  "claim_ids",
+                  "explicit",
+                  "sufficiently_specified",
+                  "concept_groups",
+                  "scope",
+                  "scope_note",
+                  "conditions",
+                  "rule_type",
+                  "premise_claim_ids",
+                  "factual_premises_status",
+                  "mapped_evidence_ids",
+                  "source_fields",
+                  "expected_original_candidate",
+                  "eligible_for_counterfactual_testing",
+                  "eligibility_reason"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "coverage": {
+              "type": "object",
+              "properties": {
+                "all_substantive_claims_addressed": {
+                  "type": "boolean"
+                },
+                "omitted_quotes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "notes": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "all_substantive_claims_addressed",
+                "omitted_quotes",
+                "notes"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "claims",
+            "rules",
+            "coverage"
+          ],
+          "additionalProperties": false
+        },
+        "strict": true
+      },
+      "verbosity": "medium"
+    },
+    "store": false,
+    "truncation": "disabled"
+  },
+  "raw_api_response": "{\n  \"id\": \"resp_0d0d84d079477c82016ade36a6d54c87d0bad98659c5b9cebc\",\n  \"object\": \"response\",\n  \"created_at\": 1792947878,\n  \"status\": \"completed\",\n  \"access_programs\": null,\n  \"background\": false,\n  \"billing\": {\n    \"payer\": \"openai\"\n  },\n  \"completed_at\": 1792947946,\n  \"error\": null,\n  \"frequency_penalty\": 0.0,\n  \"incomplete_details\": null,\n  \"instructions\": null,\n  \"max_output_tokens\": 32768,\n  \"max_tool_calls\": null,\n  \"model\": \"gpt-6-luna\",\n  \"moderation\": null,\n  \"output\": [\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36a7887c87d0b15fc2fdbfe232b7\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqmLitr5pHfsxie8XaolsQi0oFdTBuMEHZVTcVVG9Ri38nybZcrxTfCuRc-h1b2WA4edtRjVK_DCV6EIz9aPoBf_Jpv2BEIB3GEuGhkRZTfkEP3H0FiPSyY291Y_gl-rkCXi1wf_8Uc22iDVGq6uuTJZ3BgZ0RKaG1Ne-YB5W4OT9hwo2BHEUwWNrGDn_nqs0DHTU00tmOB2Qs_neshfv-1BCo0HVilNmik8fkwcsFGtCYbN9IiOC8FE5ol6s8zeAWhvYEICf8RadsQ7X1KeWDPA8e2YYaOBRTrQt9CEVW_SFrAYaPXcLTmHS_frwIVoyYGGvyvCyo5rwtlV8-3vZ77m7Vlg7vWTjUDM0-33I4UnBzU3gAVjzIvJTjma7VZZj_6_TPAMhqXQYi2uMw_uxMPy8435oHQdntIAkl_E8zYoMO3SUatitzVzla2q3E5ZXZJKTeXZ6QmpBkGqgt8eN8Fql1ZqHLSdje5Ps-7WUGErqiRSZ4ABoAGNvsOTy4WpvZu7vZXeLtOmV-F05pEKjjNEXwc23wp9WO-I8VSL22R0ByeAq1mYaviUBwTZ6obDil57sGWxMDRAApMz4luze7JgVhM4fHIaScf0xlFCMQ1iKOwvlycBBRH99qeQCu190DijxezUJxhgTnzaG46BHMRvsCcJc3-ljbKLRWuBFdBX3XmtlXOfFfFSzIqF8dkQBa_6UESlHFVqlbeB5pJqsSdAB0OYsk1eQTOLzWGdKoZ0xRaU2HG96T31PdEq4CKii4eDJQGgt9sY2OOrtXKplX6jpfxZl0dRyDEzi_JogtN4gEntHWaze2OaJ3sp2wwwJGPkJfEzxWIkEqnC9BCnpAvz8bdqXs6MyIj6N9KHzO6_EZu1TSm3jueXxZx9ERvjfvbE89M20LkGmI88FW8QSS6kmku5P6H0pGrsx0CvJ8uN7t505jP8y5cBAWk8jsdXQ9TRHdFMecJCE6DgRLFZ_gCftEZ3R9FUq9MQdedi6yA770Va2xeAjC4OtYq1qUeIdVp-rJZfgSSm2I4nWDQ87t7VNsnYTm6yXdaYOdCBPa12o0Iwp2KRC3mc2ZDxF-HxEti1j8qL3gbGGGuCW-CFTtAlfb3PQ8JzI4QY85viV_71Jwvju8zE2dFuNBoEYWh3bOTym0qEfiMQpYXa0LxFijxaIapMHQgfZHxj6Wy0RYL2Nufj4hvUXJPPdIiY8LfXPEtj6cx3aELFETRcqb8Qqcrj6uua-58FXRxrLeF6M6YFFyNfEMdQGlNBC5Fqp-PQwsZLZcpJnmC9h4TFK4t_451GZmFpQ5ayabwtoz9r0_EgTubrJB_eGsJu45kj5w502J34i0oQ7LqybMo6kEGjDNnM-VSGBEsj36HNjQrRSSMYeHTpWfuyT1sN4G0EjSSK3Rw0YlNPhv-ZqppkETLulfYpTSA6339_wBm49Nq2mp1XS87AVwaB95QmKvT8KPmPxL1DQUPbwp1qx-rf-dn0kmar5GnsENG2otQS5nu-pdzTWxASXTL3jLEU2wPknB7fVh0of7tMKeDbYyiZ_b09R2nYYjxwfPXYQ3HCiqUp-Zdau0Ok7f-Hbm16Fpj26QOeEPYj-dzrp3I2jLXRvLdKIpAeG3lT0gwDsQ9XKNutQ8nyN6OE1aH7-gTwJDlgmfj7n_OIa6rcqEXhek_mRaVB9JXHiSdX1cidZ710GEKMeZ3j0wHybUOqHykrDC005adar9zwYfRnRCr3uYh9BtGdGh_D25iCIjqHK2Q7so5FmKckHClfWGqxxPFFCyp5E_b5r4oWXHyZjSR67WbO0YVIQ2DS4fIvXbPwpMiM_4xnk1c76f8UZpcqKBPI_MXg_B2MRev9J12tRK5rY8veG7xYSgCU-evMh3OKMm4gFW6u06xmv2UKbGAVMmy3EB0qG1lrjj-jJX6sNSOnAxJPNRJLEvITEfaGrK1wO2DmybtJ_yw0N8WT1bR1Wf5nb98G-SBm0GAUdqjutJpwC50QqvqSEqaMQ1k6EzQhqsdNgvLekc8JDWR8WDYJKNayMgmiyMAKFtkzK4jRbdQcjA5clMruGX1fsXjjxLNCWyQV1akupkuopO4N5lywYmSm4C52FTJkqHNxcG5YlWz9wXF2oeyyo4N_jgwdUeaVRK5s5tngdGKyxQu14L_Gu8mFDdw13ynD0_GdbOfBqzvbr85JEXi6rIDNF-APIAlQzw0YjpUV9lQcUnwtKFeb5CZPLlGYCMIugdL6wkHqyjHBWiF9Wi_AxOlcMMNy-Cvm4BuCxUGpziDNb0-GLzbBJeIjhPuEaywBtX6IKKEkB5XnpF-lZJPbkcjRPKARKWAVht9jKmwZCdBlAUdNyH5-rQVbuQaKQSoPjPVY8R74r7lCubztlLn0tcEYQvLUb-CtYuS76rr_esbM1TihYHBs9sy7IHmyhPwonlEQOMt2Xu8flgyVVgCE0GntTzOhvmlDGu1IYswNM4bCPdaBI7FJv-5ag75eEKDy-ngM8gLL8huQyo0UONuMUN4qELVKi_8FoRHyeRx-CK8yI-zFEfZLnEEN190n_oiMH3b8uBylmrcHi6XR9iluaJwNFqQiIcOKE4RKwp1sRxX73rMhf4r2kMv7ZHFf0L75otG-T1uC9Yu0ngye3ZlFJVDNhcqXA2AMoXOI-i4-_JicchRYmnuolGZOgMcA3UiNMAwZPLPEXFElZ55dxqvr2ds9P13bCmyraoqAjcR8Hlb4QjReDVAucV1JH2nM0y4C4ec8WnZnbVyYcRAJofx85jooU1joJ7ZvS2sRpSkbn_WxvMsFvJSAV6KuqQaGz46gQ1T4kArs5KGBpA7jziEkObRiHPA-a8nlUDMXKi5ZSEYi1AzFcBkkoyb214GDbfgXjREf4_uK_mmNS27YBWfGMtyTUJHd5zHILlIAHXnnFdkQRKYPgNUuUy-tYp-aZt8MvAd0_XBVT8AASt-n3OU_0qTp2fQS828E0ozHB5uk5bZzLGIEnoYTFDmou6U8uHmkLca0vnnV0t-xZ6h4k1McF_Qc5nVN0GS9xYy7j_Pus36DxpGGPRc3a8c_OrnnJ8kyH8j4wom1krpyvsLk28UeDiG4CT_E4K_uGan0H9vu4X5DUfbEEn1qXYfp8Oc6sgb7FggJ5VW6nVAC4xnBpFdUbIFqcJtgTFwjEfrxufRS4iFGhhG3nXGGgcxEpuSHxEpXXHMtFaCkPu50BfHggeBxp2Y0Uf1iagqDNV6wJbpJLP31OWj99vv9ZSs6ehpTInIgZ0e2QoT2J1BE8e1uW16bCgO5kZzGNHdcqwCenl9anlVPgavwzUaWFrjfEb6pLm_ZrAx6Nv3qs-XMTS4PsCb9I9swUCeUMauOjBKgkeis2a-V8Yz7P8TQCDsx1TB2NC2lCu5lGZJBSo2yOFW3ncsU0_qsLmBWQ9C50fkWmRojyVIctNR3LAZUL4VwegSGPuNr2mByyYNjl0_p4SkAUi_-VeOpOCInwJn9I7HNQA5D1Imtvw42ZPi321geado3JJBYGZozfL3o2FCDWLlDQyhSeQI9N-Kn4ODEu7MCKzYEm4MGH6MCeGu5UnA0sNP9aOjLZTvMDhc61F_zhPKd7NPFRk-0WNLjirllnDR4P6z1_G0MjlzHYSHpWYL3UaDtUO4bwykG5HQkMPdX4ypvWraB7tNPaigfGAff4mqGv63FwaPobrj0YCbb6WSz7Atj21WD-iGwsAPsx6bCDRvNxOJ9A3seWcm0psEUxpR_R1GvOoTSpha2tFqeCF3VEtA4zslWEu11kfTSzsLqZ1c64lBnyp-CtZbXrTU68xSGSjzseHFXb_qim2jVtxLwLiMPUdk8jHlUmBg9cq2Spc15vLOuiur7ZwBz7MzPvyXXtN7PyDUG173yBslRE6Iea3tmpg56aRhDrTWbEPZqtvZYBY6H_VVCsRlgXnHwXEiXVbbJDKw1rnlbmCBhJFtRQO855lT8WCRM5KIICSTI6245F8Q0GJgablta63IxQYIvNwJyfuyrZfhTiPEhu0Ec3iQlcdanJHzf8mLqIjqJeXFmpCjLyMwe_uSb-xbrXTh2H2QmnyWjGmULG7XNHSAovFhXOYxsflHF0w51yr_4CifIRh0N9bVQIR3USSIhoG3qO7efSBLv9tbd_Mj6BRCmJVE983nNZaghHNKf81XVPe0w3jI9BVcK8CiITVjxiNUB8OO_KCT78l2pNgLY5Ez-efD0NGBu2bQvR5yaXgpmdQPMwPwJg3ZxkIFzMOLDoNdNuKxNKFZBZx-l1y2BbQtW_tBHFUN2JCtGVUFqHapop-h6tH8y1Fwh3KAtOUulepPeh0tiGmxUzKki2zR23JYcDic_pHqPFPmPM-UDjQG2GE1F9wmFTZyVW6bVnPt66wAhems3LlarobToCFjRBQu3VAxfGaHH_0jnpoae7j2TJY04WxIjGDbZKuSUans8htEffRbKbGdFR7hmKGk16dPFX1f9ofDXaUVZTmWyBE8SCd5dAHzJgb7v4PgzxA7NJ08aJM1q6URYbpJ-OxK-hQBS-qnyVJackgZzqAVFbrItAXV9IM4I0v9dR_4nm2qgZTjxY1X0cuXoyqeCje7sJb2E3VH3gZOmcHWJ5rpOXn2Sgjuq8iuOKvHf57N4RceZQNLy0ok8WxKOuqJTbeA7mB0L22DQjYvUlyWSHfJJTyaSqd7ZMmc4KWD23PWHYZFu9E5JqDe1QP8QJhWV07EH1w7dlCQlfbFc6lKnOVs-EBupFjC887yhDFhhFxZJ9wunR0-oJMgRvbbH8kI2cMeZFeWBq-QbS89kQhg7StIHpS_cotzurD-Xc1q2OhhRtnJaLvmbkU4P9dAl8sdK2f7MGyCg_G7kqxkibwnoPKQAoPtQoULLAWqG-yvTKC9g-lLxvlylbFvuLUA90u9KavZ2qTZHlTcJw4a9CgqaPp8ouBPF0MHcaqzIyYhpWtJLp0Njw4LD7-5ioH2K9-df92XVp0BSo72Rtd7Qjpa1nyuRufbj5jSeBOD3kB7ALqWcT-ZA6P5zv79g3foNnKEMLt26JvIoK-A985syHv4-7NAUKszvd1PGZfAwFjtMZGUHyGKRmyPN_1flBycio0rYgpN6ala_-gqqpDAY5EX-UVKOf6l97D4CArPBhbyKB37ArNr5q4RdgRJxlvHicd7cVB5HMAYW4OJjEGZEu4eDCt4rwfNQLdZmD_D1vn1Nr_JLOmugXxrTfI3Jo7PpdZdrdtm2bGBi-MsVqpHQBshdNp-AbKf6yCAEWYHpAg_9_bfvMOh27CiOJDT4Rl6MOie_GFzvMW4JS38LgKj09sMsAxdoAW4RHNPr9pk6GQ3oj_ziWeHDfXIJADMtLRKvL83hNVMcwS42IIvD5-hTBziaIsqKo31tWMOkfhVu_Xgbn08hADMtFciVqbYemhCMd7-py8-6OGF3w1EApKivTAmYnLrxlnPXTSoMq3cofi8fyeHvsLF-b-GwtNCeIuVh-dJp4LlgG8LskvNTrIHrpsjwCAbY_6O7FcarwljZOqn5touRPOyE2dDM_caHJR-W3aWvlLPsb5gYKqyT8krqd3aKtjroCz8visK_gplji43A4IDPi3TIerAiAth5RGq0IVXMhYE7u0_hjKp12sch6-bSL863wvM4QPq-xTOp7EtjNDI_B0KR1_0ep_HvS5cIjBgVrdWCOuct1UsvEaqm5Z24aBIJsNWqkRyk8-sK1cUEexxr8-yDU55cZyCzeBg_3ihH1Zsvdsk1hdiTp7gP4xQye-3G1N9in3l7LnziitsdMQg2SBXfzyoeAABUIIPIULJRYxRfbV12Ae4JDE40lPOTuTn8JUmyCY5Z4ys_hZfYfxIBtGwKgBC9Vr1xmXE_zTBNc2FxdlKwvoyVOstD_ilTFeRj2yIttEHB7JnLw9JOZmY3WxqBQSfQu_XbfHAibyOgUte4MZGjPNHJL96GVyDBVI8rkJ_Mo02384KLScdIbuI03Ov37EMMTNb3FF4u4fGbeqBaGvk19G0IJm8bnafFj_0V3adSlilT3MzJZXkw7u9Asdnn8jiTdBdCjxjdy_GWgFAzjEASGHeZsCUQ_UbaD9aqqf0eFlchmuQGzIrw_4rYpCbu08YKzhnZ-An6oQJqEged-6-g4UxFKDX7IeUk7PSCmqJUXNRggmgPgaWxlaMkjAU1l0nppyIlRfZ898kNRpC7lLTKcvX9IFvYoxthVNVd8Oi4IrdBxYZFeNFWdCusc4ESroQDKqJa7LyrsO9yMjNZLu6VOuTzZjJLQIzmcEHcruJGZExWVTFrgtsME77j2LKrw0v0g7t2AH3iVJGgWV7FSGxdkGkZOZzq8G-gdC2uMdhNu6EHDuDZOoUUqq3oUza17gxbUZtW0Lt-_RPeQMlL9ZS0svLJFELwH196ErT0A8WWh5lBwu4Mtv7mAv2IvZwPitYfdS_Nh5yO33WmiagT48v4VeJFuq5zy8XqGOetdUYEAr_tVjNXhmOXePn_M6Hc17IrB7H3W2T3ZaRkgrpTFBdMfucyfNiaV2LOiEiR9CdWllxj8WkOYatDZfsIKheIg4t13apdGL54pq3Wte730cKtWs2G_E9kfgck6LdbnBvPB6cKm-nzhT_N-p74_R_wz9yqx2veWsZKVjd0aElvr43DOOT71ToMBjPKuLODG3wK0DytF9_H_50-d3CZEDE8jKQ_qMwGLmngFhlNoXQQqA1qlRFolHbVx3ef8eiRojzJ2KhYHwZXWWfDa2V1GjK9f3ZAeUDYS8swEDi3E7HsnDC2tA6y7vRwAMIKDXl8SaJasHD3JPlqmT3P9mj-al2jd6jKZ1tVNa4MRkrStsJoDiN2xE7fDYKfox_6Qbti3nzwMQPIjPi3oaiWM7SjaFxIr0bwkza8rJ_in5hXAVN7wfK66pSTXSl5Ds59THvC_ocRLjdU6mrIsf-BXbKhJuzN_hN-vEsZZ_TVRhNVg35dC3aeFcWuaziEcfAEfPjgD-MEHh54k3bKoaEFYpG2OSOPJa5Kob10lJkoMSkJa_ib74RFEafd84JpiT4bt4aPG-d0Gymx2tbbmk6OWmnspvDz6H8_l7Q5wBJX0aV8vN8rLfpfPjflMZ5nNwoPvssvpU_JdRwW_Cu5BCVTMKQYXv36bcFLONBzv2-xiIQA8nOdEbtcktnZD73k_dX6DdEiMF3xHxfUYnsW0dCalC-g0oAxkhAtFHlnfIfeSd8JQpl76BhjrXadnmtUF_0Ejyczfqq0UZq2aYRoJNQHo3rPkaNrdW-ba7Xj1hyK_hyQowaYOHeo50csMzF51iYcy42woi36-094TDSrkcqU5Yx1bt8n3i9nWm-RWnGRJVST6L65QQm-jwT0AlN1IYtddCuqF--ukiubgTQqhiEsysEAA9QjgGEWfES8QnVowDd_oZGMbjWXhDZIarIFKtudB_P6zzmTP1vVmY2ueooeN0sjnBhUTGM5I78phrG41QaSZUaSVokOLwyutfYaaEfWIPrzU6QkzcaL5yTTkTz-vXGmOkQyhOHx8ZznvuYiI3qxnMdhzDNMS0ZVvphP8TcjognUIXfHCQbF_hBHZ0CyzbHTAKJpiU9ldsc4_OfCC0jCaggdc39WmfoyvoBY94jyum6JcripW0oE-5Yz978Kd0fQzcrShfkjSY1MIpGj8lKib24G4IzVIHRFx6czp_awAPvGZk_K1MDBqHXjIs5UOPzuVrOe6hbrvquT_MLs3V5l2O9kfY5taKA8BRQ98YXMSaicN-vQX9xPALFoVO07-scRe_Dv6jhgjn9EUk9Wo0InhC8uPBKGbm1SsVn8N80UPlwXtaASnSoh5TVCDnisHOp5DHmwpZRucOEi3qTgEQiQpJR9Ic8aV54OUpLFy1n4CDnWcrD4IqSt01R_IqWW4yHIjWoEU7y4tckzp7fY1vosfKGD0Fv7nVyYGNpeEQ\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36ac553887d09028ec2f435c5b0e\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqNmQJEkYe6WP17917DoLSIrlJHZu9ulAQccqTK1C0XVAcujOpc-VJ-t9EVg0xuIWmcUE_K98YaRM9-d6rwoaUYnYGsqE3FfibMBv9-s3LCotgjbUZeC_IWK32lgZwB-kpC1YUyv-iYuSDJT9TP7TosVAd2NXgrhW2jyE7ZIi5z1nir_2wQU8jGkdvE-shS8045lZTcTG09iMqMmhLLN9QrTByKQ4TGHQsoGXZrp4utH4gpoH8AUX5HPkFZGS7nJ0nt89NFAT_1fyh3NlOKfWyxGqZ6PElmKb-4OxWLdVQ0sQ9PvyOohDO-JNVFG6I8gSpKxV0ICPkWh9r7fprRKYniAs8W9F34Xy6lPBO2fsj9_MJ5gaxhHbFOJwG6VKNBwI9bdb5oAAXliQQGP6A23RPVgIrU9YUouqL1bdwV4eGGyN5zGz95jN0bGvsya8CgQaHqyYJwWLEL2NQrdYdfqthercWrvcl37PQYNESXz5bt-OBJpAP-MSbC8ZXpEncvy42qfgjAO_ilksVPI2he8891i2Mj359PJGALp4hiRvBO3fjvE6-kI-WPrJVYS03W8Cfohg_gYT8ND8bARR3GZHuvIdgq_PdmI9oGqiB9yBExvIJCWJJIDU-wF836JAiOsOOdm9ENg6vurKNyXREYMszxSAmyDYvls-R1IMRYgHxg_HmKtbYgjQ2h9NqfHGeQJqtgHx4DwIB0eYNDKQYSTqklWPEn8VcQEOsGDLRJxMq1tdxgKpW3DRjswzbLvCrKgZVZA9CbLb2T-RQpHZDBrgP2XoMVqLfeB9FvVx9QzOqaaV47ixhzzUAQYPvvoRjJcQiFqk6-79bAbAANvBys3P0f0Vh78PY0uj373LU2fc8FeGMMCoUSEz0kqkUk-gnexykTyiA5hSqUxdg_evC4Il6CjGE8kyBIN5tRd3VA9PyePTltsPTMrJsvy2ZP-ixMjnX_RIrMlqdQts7IOc_i7Yk5Sf2CkPaVwQzae2s3oCv_D4sDp2BblE8jsy9bxcTqqdIIe6VDKkbuZ5qpnBr-gIW055wiUbLUHPcXwZP1roI-iT_Xx8PYOmhDheUAzkBaC0llYAqxad6-GULusvx-unZL8YcgGoHhQJ7-3nyrKbWY3l_Ndvg91z8xQME4YjIrMgxX0lTMKres_PwCEKsvkzGRxxgj6yOOZ1ObBp7wJjQ2rgDv2jXgIAokfT0eVtdo6CHyzslI_M-36B18qPXktPk2a2OjK_lqPBeekmm4D7f68hHxhtfu73BPi3lKtrP7GjNnd4RdVjOUJj9TiBAJEauwu_Gd4PMKowVoBjn9nVXJW5NyBxDRnaTugr6zpUWL4urj73qSaaE5_NP1g6v9P1Ak9CN7ycGtS7hnJKc4E823sB_KSGC7_zAnAXzwmYUfNFE2vlyfaXgSqcw9PZjNJOoYah1sjIsARc9m7wf_77dJ_gn3vP1chIpNrCFZN7pIH5GJSGG4IHKvcV43yjfN-7aCPseNbykIhEEqY6MBoNkdDdMIk33klZodFkbxG1qyGYpJzs0rhIZbtB9_Lq2_KwuY1zR5qBt2w1C38_xAJQg-3OLS3ESdLTY0_TUQfl9tuVq0wJrR4xyMPqDqjwlrNkA5JdDi8G0Daw3uvKHpiIP1ttUEH-iQ_WFJu1GGOMiXnBCbjdwVOGeBTB03iL0KZijucbvOxkwmEDQZBanadPLUAenina_58EODgFisiiLFNZ0NvVirlFrkaBf1OQBb_0iTSsU4kuYNjb1zMrOwkAvbX7qYA8cqJq-A0_CO_7DwB1yHGbnBDMNkB6qOKF4eGUHG94T2rzvt73UkBndwmL3osWiBJNpO5Krc9ZCBrSaBUVADoHS_UlWnTG65D8BOwXChA5wsy94ujf4X5zbTC77Rp1KZrPNRj-9sFv-SqcRbRsn0rea4vdcD4uDkx0fSGP7D8ntx_rALic-aHHdP7Jw4t4R1pKp98g9P0voCYiayewuFS6zhSS40g2YHkj1juFtMRoTjDmgCVvQ3A28ncB9UTpnaj9aRbcKSXIBrlPv5VsMCTZfsJvIyqx0p-2pSV4JM9gPdWMmvS-OZ1KUiEBaiO5A4dp8jlgMAYZ6Z_SrK-jCg_spM05yyRvTg7gGvwzasxu0-KiCif3_62iTymOOUeOST4_gC8sEeAvCVjPUrdoL8txvFQemlMBGz6jYlHoYfMSG60aPM8lU-myHirAytUWRWY1C_3NRsmiMNR2Ro3DQbmuIcgCdxmBVG73EjPfY-_4PPjSGopFBZvul4iWatqyMYB4wYwx-G2sfJ5ax6nN-shha4mGHJ7fiqW1uJ0Uya_bemJloQopAOqLB3uHoRxScH_qkj6ms6s4JdzBVO5bb115QHMkVCh04vbZHOxtBtSvgsT1QG5tWaxBxVDOhS5KLBeRdjKOognowwmiTVt6i5oyvqFVuHKoLQGjArnSzVMF5IcQfzjSyRTmERqwjRE9nMHtULBAcPH5nw0BYblTOJKEZ0jexMBICSQAtylfLC3Z1OzuSq8qe0shEfglfIvM9vguf-o-lTAham7mobgkD7sgioIE1Ll_Rl12vJMYrUt1PLqJUZmvSYWYr07aR0Xis60UgrhTgAJVgJZNEVtC8QSj9WfgNbuvzC_lHgn-cPf9NbAQ_m8UciUq1RGcTRIIXKyEv9tJem5mg0AmSdTRY_pjfFmkA78tEuL1dW6mRJVmPnzh0JVhgCHT5IvdzhFYJnmededWbQ1atU9qdp8PaQNuri_7fHwejbi4bI6BDRkDSsDvJhuq6uxUEB5OiQ20eCy2KNneObrU2ZSz8eJPMd3euze3-2c_XG-zj_eneexTmwR8elWxE9J44g7Jpi3lvMH-DaMwhdIbhRuxd8sPzaEBBRIgaaTbx31r6F_5S5N1JJvoSU5Ed-57Uv91RbQk9UY8mO-X2IyMDzRQvlnL1bbHZeM4CBjbG9_U9_NA_Mvsc3rzG4y8zotdzRd_4i2q6KraLGn98QBtqaEPnlSClZecIKupXiJpUMGwDDU7vue6V7dEJ8H_RW6BnnAKvHxmTo4ddKPPuY51k5n9IJQufVEN6glrzoZUFnBkEquI1G-c3KFOArQPsi3EXuWN2gv3W-vqbbLdWUj4-kwTWs0FnDJRGJdJiEP8W0DNdXXyukKjEOyxCZpq2WV8cEnyJkdOmqiuPpTQIDYiftmqs3flyNrB1hQJo9b_bEY49Z6p01rt4FdwOMgs5fAETFljWppdZx2QCRhWZGYK0cIF1Boys3VZjrwV841NUOxZ4yKEaO_TN7fvJcYf8-FVKAzOlpeN5g91p3EmEiY5f0hmo1TruZcSKYRHUyhzpOpTYBr0Obu6TarzRPGInp_-KvKTZkV-fEG6zxLMsPH7j_KAjrA38gd_HrwYfaqKKgtbmEvS5PpE9NWld1XJTa3nz1UKL1PM6B1stTa1CaR71cHO8Fst6c6X8zAfUk1qeRixZV5Plg_LWV5BclTfJvJiw-jpT_uaNMq-HHGLfnalDqSpl35jTfCSRh6jUmie17yJGMo-XssemsJv3iu93-ZLciu29qQSIqawdASywRAHnmpoeDch74pX5cm7fs6pGBK2QufRXht0IJ90lAlpsf9MlTXgqwsjLGEvlU2CKNi7ilj_-NQOffduq98juGxK8nqOm_H_5p5W6pIT2f8Wtb_qbpjTp14KgJZut1KvI-Xo4afIZIyhWKJB_yLneRqiUwx6gRpshTf3cpewtZjt6HOt77wEBAujtt3ITgVpFjlUcRX7ivRRmoei4cAZRi8wwvkYdE5-V_ogSuaEkK_BB2maWZyi3luvWJPLTy2xOyLp-bheqyBYvDQqhioC9YkztWar3JEDLfyjEgN0xRcgQlBE2D0GR_pDvfQrn_WCpvjRjhs6eP6yXFYjB4MpphzAZ2n-QxVUHaxtAGtnCDQ3ouZf27dkrYV5phjB1olW02tfCFKdMH-jJovLtSLNsuXsxF7zPdkFhUxG8RYT5DFuhycBmdAYcpm0PtUvysW3u42iElqqqMECj3-Fd5iPSwzQsnh2A8WhuLNr-tTMcXVUV_hVoHuV7v6dUwsyjdB-1R3Rombjyrl5YAAYk95tt2xaQYKFvPSuWMhGzRygZAXOsZXRjM4ZCJPd5UExdrSbzvUpH7qv0n9um01wLYyJD7CS-atytnIGsVtCAllE4ZOtsub25AK6bmvQraoZkIhKR5hQYvo_6jWc9JKE125keD57W3T6T3TgTyOeR493XGTIF5b4FXIXQpdpcKOKT2nEfQJ0DJAeszC2AubgNOR-1XUYFkkcBrIRhFJW_rX0R51RyrBlFUfGN5CdWPauPQIJstkXI4L_YEtqStPEy60izPCebsWNx7-I3QgAOqZzADb-1pgctR0_fErHyk7PPcY_Fbhu-MUY79zNIJYUvh7OnY1z3R6ol4SsYO7F5XPyCKqWHQwuTQZ3duiP1WbA1ZE8bO0NKAIEKMu0cYg-iQDaubD3vHD1iovU2fZPh8vS9n7vbn4xSQuLIqtFg3wD7N3aA6x-2SGhN-jdaX7fMV0uZtZIt8O4uMpBwT-WvXf9_L-8FPrbbWYbDWAgK6lHYajPH6SC6LnnumUBKqX3tswugvQXN6CAf5sio3UfC3mcgf2ncBZA4KPft5ibLPG-61Jt-ZPTy5JhgdlxY9jYoLumegEuADEJEUgXRT8FoU66fzmxkL54fYfw4lAfGCfwYsfQoZzGi6yi_Gny30SUjGgaU4HvfSj7nXJ8H3h3_ZZFlnOBaInVAZhxSpRetEtHniqOQWxogi9A9a0yZFt-WILpczYvGA1SwZ0xcNVU4BizzHzn_bMmvEMf8g_8U7x5v03B0dUsnYidrEG63BOD_elm97CHzBP9ljMm8EpQs_jXCzlZPCvT3FcZF_DRGzRg0vTx3-OIkRe2Vspkz7kZt5N4gDSK0n5UUasA5xSjhAS33sifOEhOm4Ch60OcBElZlstTMHtkBtq3X0AHrfW9CFIppu1VAkEPupM20SsgSgQAxo0v_BTj2Y2JkQuMY9d2Du_V5kHhczUs8NxrWer0rFUZjQYyJpS8GQDNeKnF-vf3F1sxNaQkjNnUeJgPQCTQZ-E2EvlqelN-oJtmAiFf2aBmpkPQ1yaToKPNvAlGGKgnHusloMfxIWFj370pgrtjrmUedNLx-feZJpk7pPHqK1A4w8UwcW1GwNr6u20LDFw2xBJ_Dt3x1jXGuqkHwJ8e-Q_LeTZ3Q5HHhI7RKP2Y_pgK-wvrJwQF4IaE7NXlTpxrvlL3M3OBrTAEnu_WL5Rzi0MRvY_3Hv23DEjNuk13Pd7_R1UZi8Aea63QaDGHoMLPatRitzxusxnuc6-n4izR9ZxG0bqw_EN4PMXOk9v6ADakgwCXt7b7cfgFSMCIeGZoFErqHuoZqaoyJkqMoZCra1pkjwx_YncAwEa2XDOKNegJEY7D3rKoQK24URrEEfiwSKRuSjsqU6pvKjIOAIUOhj0WTxpc8gjTWyv7t6oRpjd7xOAHort_1e7wmj3XGqolPurFKNQKqVDMajv0ngGX7ywWGDRIU6mJ2PcOjTNDdU8LeI9vvcqRmiCiA4buSWdGECnCfbOB1V7jycWCe05ahmZ2L0UEvXB3G8FFvqoUqIGqHsbJsEXAFoZHbQql0zR7nneGH5c6BFDh0nJLY58Hc1wSmfcHcEkLT6tVqtiaOji8ArSw1Mmka9DutUIZ90ImuCKNUcTTzBHKBOgZ8dUfl29VkmiqUmEyESiVIHKY6REz1d8aK6ReKpi9OSJWP-ColybqQUrz4DYsf4eaQ0MU9ylsvjsPBW0yhCpwEOcgQC5NDr6QmouZWk9ZO4FZjeNgi6FI-0gI3e44TbSH4m8MQDflShLN_vUOQWpHlDl_JryJwsu22SeVDPg2pC9qYUidsjdghc6T1VQYuktMTIhk2XVhUXZ3CGYDJIx76L0RTCdUeJWbykmbBfb1wGKKvl71w9tlIiYDY5tI5Hh_IPpRDf6feTekPGq8fZftpmqFPsCXneiwr_fWB6_0l6YIkczZXjjxPHv2r8Vii5axPOXgewXeCopXPXrWcIaidPpTmNFOls2Udwfh1mzvbm-YcJibnsMb8QcPtLCF3f7f42jQC2RSM2iYhW56OkM0xsdErOLW0dPR4UvzWQ5S9lvJGamOg1tWB01zn0BNY7bvOOy_elarAfLvbDOVDi5Hnbrr39SfjvTsSsjiMS2k3Zk0cWrZxJBM2QrPqezcTi87fe1OuKKG7DrD-LgKiGLLzllRIIiJa_qPZ1gagdw-8zqg2KnklixtXMWDL4TPhUUaYoje_W-OR45-dMqzBkxdEuQ3GZLViFikIsw13rSncXrBBh65Wv9Lwthrv7PMSIBrurU0UkZ7JhgVuSWN6wcvPCPLTsZ95887bb1OxFKdnGOh9JrlMq660RwGkZm3FHEuUog4bFfaiV7i1FoNC8hawaPEmBWNe-VBwXtaZ8xfMhV_qYTZkUDTOkGwgtDNx3kPTV7jEfedqfLC0-iWVeneVjO4Udmc_otYFizHJ-F3DabWXl8mt0rZQzd40gsgNmme3exqvn3DkuIdrbRdI_1oQC1vpECAJj7N8yYUYYYvbuKseYNJKIdGcXvGe57QFsu257fJ5m-tVs1g5XVjVDnvR2T7omxbXDj1yXSUaMv3FxzH38y0NLkZXoRlWFznOFBi5emhGfRSinIn9eV4mhIBOFpYqv8p-tr5PEWQdqqwCfGOU4fpkanC8qQUNXmmv8sWxnvrel-jRHHVrZj29l90EnSH_H070eVoNtD6fA7EV9MCY7mtG-s2DFUHVkhWG0K37R_jD9G3ZPkkNszMA340ydH3ZmrA0IiGmQK3DefEFUrMGNAKmKtAFK-JD1xR8x3BCVK4Dx8B1RzrTDhqkxIQ5VqbPfTyzouM9fALkbAK8ufFzaZIs5coENef1peeCVXtOhXu2T847KHWwrtNCU5D-fctoIIkWmOMW29qC63ORlAhRkt8czNnONkRxNK0HDPigDQzHX3ojNe4rSpbstudGCsg-f4xN-5OnBz7ewOQl5a0s3ERRlpRs_6TSMSylAVYzprDm5Jx99cNMrcsiJA-yYT_t5XDhmH6yTk52s9yxdvqk95ZaA2bq4ijZmQVyBrhHGdvSDXkxeVyGTjx0CigjR44qnHmK_voY5JfnscuOn9XmUwE4V9oBoyaF5CQK4xc7_wSI2CmM2W5360zbsqX2m4Kj_hw7tYMAIFei7hVmJiQpMkodQ2SsPrgWn4S3e4EMG9T5eA9RvuvWl3n8hA1qxJ4hcmQbD4KWLnjmjp-WyIryk5K70JScnBazdrMufrJsV18TNH5Lz2nfs7HUY6RHZBd7SCeGA5mRiou3wzI86NvMpDqLXrtAGtH4pJEvz_c2UO0vMh-VZTeLW0ubcBZOoiC5ovUIStEsz6XNRKS4kGIB2lcTEAVkc0JMKkTjTKKv_x263RYt_cWdN75LEK90nhTwb3fhySPFmjQqbkLNSs1CSrOQZpf1x8PnMbosqYrf71RP20vQ5VHE2pp1WyzX2UoG1ExqhzX3eztE0wB5JB1yGA3bf8SYTn3j9ps7qhU7Yiajk3sG_u2eW9f5Kf2554Fi0bJqVw-Z5or0KBTNBtUFgw3aL3n95CVm8BMAmz9cdartdhofmOJLIA_2-o4RdnXKZyqq1S2NSmAptOV1Rp4-xyURtv9euKcINhP-L46ADeU0N4u5Z9dUMcw_LG6JDg31EYV6HLLH0hO3U6G37GdqmglPRr8jAqhsrmnfuY1Y_XYHkYCvYcd_Jm9CGYzHQJMCTuFuRTJWMkNtk-LeytL2ECZcWFhTo3fa8d9gxnscpN_Zt5H647ZFlv39SZgH_rfRHz3MAtp46ORgWcZ-vhzJr97MssDlQkP6C576IhwbnDRf-GtVpUDlVkSji1-vOjfCca1-dEHLVW4B4O_iOTyeTM4h8VthvzTHXfvuxY0SchZAncXvQxbwdzFM1A4wIA_qiRTc4dhPDTzYUVO0K_0AT2ztiJ62Gos5T-F17vlFN3Owx3qdpwbJjleYnT2FkVwIhnpx31-drt8jIN5_FSCsCaABu8YR7XOZhvFYStyPqMlhal83k8s5LlnfSzG9jKhr3_1vTWzAK79qDL0MQHHZ9NUuviR3dv1bKYdk8a8QdIwGfi9B1RhF3NDJF1xe3Vk9ARG7PrDJz6O8h_EeC44hFrEWqHcbNlvJS_earg5KUGgk8Zsw1Fqs80ZAM41g90qFRLOJcTUxUf4kJFLUnd_afHLpHWa_t_JovWBgdHNO62iPXnnbLCKtnW6Z9piQ\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36b1484487d089e825611d3912f8\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqqZK1TdUQehdG46V7cwGcTyLSfXrosQ9vVx7xcPzH-y0buIABKXLp7nxH1QhV83aSxGOPytFJK2fnATc_dqb6J6mZbahjihmaEUojOBLutOEebRklEXIw8zEuEqmtaQXprdq8uBHCVD9GYCvcPWCmrygBCKqzIJ7abdBxtZWrRFHCITqje6hSPWWN9wRprTX_ryzl2EstNhHaPFboBxcx8jWSUycVmbQbF0_ERHEYglzbiK_5F3zYXhAIpmSld9Gp9ULAEF8nKOH6d-2cgBIXYGM7ZCVMT8gqQjlNx1zaUYdjvUsZPp5oeSZOGcMEpynN1ZXKBSSxrVnJKKK2BgN83m8PBUh0EhEKTJ8O_xSB8uHlnPvnPjBjdmxUBDf_tck6xLiAvVXTN8bYBA3siMPxxxLr80XdazhPZhUROAOT-nr1V1LuOeGRTaPq0a4Pb_GvAahfmoAkkoIrKaDdCXtTkZSy4s6lwRvfzebHraTLn-l7mNxz0U8op3b5rKTz0pa88amttQsE6i6GPppu9a_Dok1JmcEdqCq7JVP9ygXoudUGKAKB7uA-j3U-e3MLr3BDdwmPBbeirgRy8ODemJGxGrGZVHt19i6Ey4EtrJbaiLGHoi1RRksEaRHZSrAJAOWtOU2Nd1En93NSigS7riQungdDSTZDsMJyFLaTayy2rS2j0XQXd8qvjC9jy9xi0XaHp9xqs1UgARmREEITZWqReU25tqXKKokGmFF2bR2QW86qn0x2KT66cY8lFK6MBQ0Ugl7KzWk_yf-2pyCdJoqvajiwiJ7HIf-zByu8Tf9B0u2kzo8tQeEKSZsKCXl5YXKRDtHD_BV7lfbKof94M6XEbqbsPCE6VPzi6pvBR-VNwXJ-C8abtERjg4dTSaGtQRbqLQu20Hfvy0uqMFnKs0Wl1pWTiE5UtZTKjHOVwPT-jyjYQkD_It0bAK3U_q2eaBjUu8ZgMyXZa8tSNIDyv8aeZOrroNhuckWGQoSYqSB7kaIpy076Dl2e3kqU4mA43sYc8D3cjws0BhN9pnJHJhVtx8EiypbBFp2nxvAQoJmGShJh4YeFtM-mQpfqAiTHlO0kNeoIA0EojN3gdqtK-DZK6a8pO7amQYOkOz0X4EeUj906Q0vQ6hxUinxvh9LIuA3kikRdUdZNkdbTqLC2kw002UFM5MxFVmFoNLtvnCFVAIpy8n6q9M-HSqwMWS2v-1Gp28HeY66XSVTzYeo-T9h48ROUPtgoctpllcLZTjaTu_FHSd6JZwapyRMira_e3hr3rnt0_P5RO4yTdjnHgW4Z-NGb4tMWU4WiqyBPu0SiaN3T1J7KO3Wdfg53XIj2VGWQRDN0r5oiP0lPe4oDvmOKznILJrZvsjnqpw3uHMpZZQTtYKVAHt7MWFpET8-D27gZinGUZQ4YBCc7bJ8zLnzb13mUjPk46KJrHST240pDaG-JprJA9JZqCiRBtWYSe3oPLs4UMuqfVFN1yR731M-YQhWE6tnQwmKJZikbBM16LBFjm7P-K5xpCeUfMA2pLEyLUDFX7lFAtZWzgR_TxiD5dGyX0FF0a2__b-7zQsHohxBe7v5y53Et-P-cRc_YjgoDC2uAkw8ff3ehoJ1u-lYxRRHGT-aUwAE6E-ad5aRG8DtuFXYzCBiN8mlphHPbYqilTa_i0VDAYzMQQDYPhPRZvXxI_EQXVilNG0kA6oypLtsGOgkZ8Mzm7LClTRlYn7OYhy8HQSDc2Ppmg5ywt4jVMldnNzUxt77m5AOCdEHQggR8nGZWo6khmwH7aHxvwzQ9LQzd6kdRLRN69BCP8b3F-OoWTTTdFPWrq6OrMkGS6rL0YCA-82jlGX4zAKUHnbb3zAAb89GY41Da_yccyeNaXB2xtjxQvDeHlomG8In_H4PocMX2PvHXJzOm5bOyGcceeq3VgX3AOfMyeaFwstncSVQ4BguLt9MpiepGrrmi3Zm2W796QcjApQKV8k5u-z79EF4OY9Sgi9XTwCxPJiJCZ-kkNKf_L_SQEwyhKHby7ezdX1UQxRhOGKikhhwv452Qyl1WMPTYgCZ6Wk_nIqYadaMT7-Xi91huDIsIRBPZPOXoURJP1LdFJ1xGfvupgUhN9lT9fRkpsBJDEMPa_4TyVcgT1TpnQ2pZi4anqg5es6BM2w-O-IchhMpfkbx1_8UdTjOpWH2d8ksMAeOfQxSNJFo9USCmz_Y-uE30fO7L1RU4lwBz-wmwlXgN_SaSgFNBx8aJM48WymBLFFAxlgffFavAP6W-rbn6Ayu2F8yyHvG0Ls750F74cfjpqPnx7SRHgoQDT-X2Nj0DA4dzZr2dzZBcuiaR-wjZYMzC1iTnBntv3V199-IrRC4R0GHR0ziv_Kgwni0oq1wA3NA_ZnN4ySTurRsn6SMY0akPC9zm96f18Ar6PZa72X1oEp4j19JBN-hYqzIBaOx8x-5CPAxMinUIWGPXjRVQ935m5ZOkKRptcZGaPYVwI2EHg5rHNrRPk0EmejoybEjHQJvkalZpXlWcKSf-FMKvZFRnSVSxD-7iGLWIsryOROKKTh8U2gN0RSfxKFy1mxMZkVg33NL8s6Ha_ubq31YreZ_XxlSLsU2gKfldsSqtnwurKznBRAWhWAP0ZQ7SK_Y-vfOadplYEG0KYsGgDlFVN1-KX-qWq4EgT9aGTfIlci28TaZQRfQ219VU9nB9_1f6kd_4-NMXGU5Twup5JyzKTII2rx7XHMy_XWLlzYM_-63sWE-up5kGeaZDMJaoC-DR2Frd3lk9ZmY2Wh58809J_B-veznwHN4vt5u36l7h5iasLxrCKrd9D4BVjTLdrE85lcxCsW12u3nLxlJKY6QO2oBBIonZVDkG4ZDCUnXqy5zoWEMdlQT4WZO2mXLlOEXY0SwTJ_9DZQb4nmHZ-27FFF-1mH8B0lqzWPkUy82lvx6NQltJPBB8A8Ze06-bUVs2MxfZicQD9jnCJAC19NTHpDOrvZvJ6kwzLWhgE5c0R5eRa640fYz-NKb52izCQ6bm3Ehrzj0FXyhyEDBgOkymum0jihboyiDssIxCDYfvi6sDGIsoNq5-lm32Mwpk7oh03AdX4BChIBPny99eRxOA3L8ZEEeX9K678GosCA6HBaqUtt5vqyQT_P3Os05T9wELMXkcdqBYNgEzsZ7i4bhtwCEnD59rfmf6ZNwnTTyMQ0Cf2cP5L41a14GXGYOBKdgmMVshunTBMf3cKzCHmcktiFrJGpvPGhVnwTZPnCFtOjJ3SpHD5wXN9q-vrZSlvIB8psrxosw6lQr337wbW-ZjCBNavisePC0HpgsEE2-MKm53VA5M829_k46fcbAeb8ZJPAHd65zmp8Vvpk7hVCkZbV2VrT8I7GGiMkSubNFTVHB7TVePkd6_54G-fOR25HnFBvJHhFldLvIF7C6V3AHgshREWU0KAx5sXglGxgMgJgOLWNvY3wiRLjbD_QM8JkvGOWNLFb-fZNVra9cTMpPVWYZX6AD2m79nuK5eDb_7td0PZ4mgTRE8TcsFImMOoN7hPBelhHRPAnxLIAmUT_3nhpu1_xK9mDl6Odn27YQh4yksGsEc2IgGKI0E2AAEBaJAG2Mxdqe3kXN9pdEWnPbPyNjEhk5U6iegT8ANiwNVIMNx0nykORFmezuRMDK5jDsaZwE7bUSb-izaE18N40n1zAvyY_QzYzYPPIJjDHpMq0WtW7-EKa9ZG5iKjnGCWhu4PAU9d5UwqppXlArv7Iwsz92hcZk1gP3KsPtaXXD4L5gxbvALVvjJ4hSyAhDxFzm_QcUWQvcT7uM7EQJUsBB_M7hTG4vrCymQ8fWsDvcIXRWaTW4ZcVqCib4pdyS6V3Y-LOAXJUk6F-oTERblXZtva2Xl7wE8N2tj4QqBp7fPX_vJJOBF2OCRraVbwyYneBCjcvyKJAS22vjbgCfiz7xcix2m54sEM4OLYwxHf4cR26NlvVJcCLwZuKYsZmHI9WUOXm1rsTHkJgd6IUDQxnaiowFdHOgKx-6yScWUl-J5HFmxIEFakF1v95Cf2PfJZpu-buE5daZut-7UIQ7qg4QnzdMRU1FlgneabxvMMDyvq-k-iiNhTsXsxPs5QHmmxHfGKrUGeguw0WVhnj8afTMawWYV7YXM6BEFSceXKPrF2hkBZLf4ZVoBMDnWpmNSe1YfEc9-q0Hw7oMr7A9dZBFk6NkI24uw_o5PIAu3ftyJM8xQ-NZmfhELmw27__n4PrUpgJVmQE-aMc-blwjCgaI8x13ToOgym117g3qYN4KZry5MV6DkEdfHScetiZropyCt1RyuFUQm6z6XgHkAVmUa6Mt--G5Ibrfdf0X597qy6bnv1TwxxK9ZGQkpQwDA_Nbu3qtVZRbN6QfZKnpKbqY5yKGcTfDaWuk_HPMz6ognwVb3IPhwUFKfCA3rNa9UaDOYMCyF_FS9wp3vPVQaJW-si_C-ay3lGYW2TjwMDqNENfLHBTScxMw19BPShLzWNI7jQbRWk-6SfqS_SYbJPWtVxjW9AT9LJKy4JWB3iD9JRN5i0hHwDCUavIaiWCGJZUTK8A1VYiO1jd9igvP3B6h9AlrAfOvOwWTFuSM3uoOsGXnbFICyS7TvxhcA95AzzRwUtvm7ADELFHbxiZGzgrbpkpOMCxq21wHxp_CRYt5AQwNSq22P4aUdZ2mRWl7uly5yEpZOwwnv9iBCGTfAAFI8OIjZnq34FZOpNhZdF5-8D0I6Rc0gZcFQJfJtwKdJdqO_zwaXBxa6e1Hv9jtdPDvbYJj7KL9baK7IUnatpNnz4WHixTbKFwN7VrzFtXtdq40O1FiQ0rP1vcXvRY37ILJfhM0nqEpmPFMBJsRq0xG5D57P_E71xRFFkPVVdtzEAvtDy4GL5QSIGHQM9LxJpcaam9UdfEJWAIYLa9LKysdYNsJmilFYvtVZC7bduq4ZhOyvoq-vAEqINRnsM8DbX5yN0ZXBzhCBpj8QowjjVtGlCBe-SQxRHVigQTBTATadwlEN0z9FSeY-p2b_wipc1eAqKPQAqkQ9_QMb_iyFgO2W7W89-o1L_zwWp9lRnBLe9NMp3ReLbIbvcIbImN5NCfYMV9h6DcREeukgmFI5Caswi4PZRoCVpwoHO4Vvk6iK2haSOA-aDZ427PPDFPXHvxVMwaUCK2aInccB2iRFOJokm_JkkmW3umkSjyUzrmIPdX9rlO79pl2MC2DInB1mHjeU_ahnzli003M_Geu2FvMSowmi1aATDnBqcVascq9EaSu5VoQYv5RF1Kc_0nbBGmokIaHmSnYTCy75Zsozi12JGqrxOXGBarCxzHf3iSUgX4Fdf4t2AqFJuG97IJdD1lrC-kqdb1m_Wpmd7C8QxCdOkcSqGYg2zZ-yn901or9DAntlgLy3ITK98dYEli52DUlgS9t7c3QrSHZU1sbafFYgAnGUlDH9dFcH5c-3WHIa1Cj-SYW2-E5RPpj3nCQx2btM7kMz4rw5cRxXNwF1amXOl6C5nclusln9AYvfXsRGxUrcxTVolPcXQJPXmu94RknwjJxcQP9vQotiDLSP9aabEySZB3PnWKcjh_TIG3rMjaTQLca5kR4H7vIoyTXk8-HC1W6aTsWnRTfyUBF-U9G-Q7o2g1WM9Dcz-Y7AlvIPHn5WlDcLWt3jL9KefgShm9t-FbjFTeOYRWhSb003cg8syjfXMWYcDbz1E5sc98Wlmfj65ZDzqEMpfjmHffnjB2xXmkZk-2XCJz18UfV2MyKeOd9eAw8vrOmuWJstOf74LtVYgMWcNN_8yqtcgsbWviagcxL4IcnC573eY1qslrvU1LnOnfMIsapAoBE_kyOzTup8pjpbHo31qp03M-_-zv8Mo6MnqzqfXw7Tfx8EVx75X6S7_yrak5yBLEJdYW-TU7C3lz0RPwTN90b3rLJtch825z7Eabeg3IOwoGpO_Nz-hZt_28K-AujqYJCB0kEN7yWAkRUpvkzm35IYHeLfhNO0cTXN6AwUjNXBeeTxTf3tBVyNCBaCxvKNlmV8mYDgQI5lEH3bSyBZFbHhtxECEhThxisoIwtN6WdaJsoUIb7tZC1ay0WnBEQFI8ZFSeLN5rWUWT9t-l8NsxHvFk7P5n2lQNaZIUla4Cx26fzgL14mMcVsNgZANgK1Y3-sfCKkAE_6MKyzid0_21Xvnm0tT03Hx4I7cfk-iSgwXowXI0A09jwK0wtJVapDle9244KsbxTvgzVWAT3DxvEYoESFys2d6aA3fhNZ0OIBsc-F8MEZsgJ2THkQFdDPaCNTxiGv6vL4PQ8B_O3LYeDb2gwYCbszsDPwjX90jAdz9m91kTRNBmcNzjRRs7GJWLsPumJ0xBpCG799ro92dxQrIn_iGRLsOYqb9wH6Nbj98o0XwkSIKP6DnxCu_GL_7fPHu6ItrV8FZBn-vGm9cQVkaPkewLiXlPP3VLVdnPWRxy2hN3gfzrWtwITgj2l6HqfjVM7dwq2XZTJ7grs-y-gDYAOgG8v8G3JKr7OYRA2gtGdEXa4M22xdy4UhO7P46azJcn7x3xed9cYdQyAbwzNhvAJUhqL5975DoUM-JU7uuS_znalgssrt532-myxX9g7gkrfrXNFqCpc_Xe1Mn7ZcCpDhlBx_g0JYXoueDzySrUXdFJeSMnbSyjPE-FN19mnr5XvqDhPhp_a_qdRyDM6x66PxCzj4IU79LSh0jLB1_ZFPHikRYG6Hg7TtESPv3EdLcElIBsqmHMCNU2gdHwwe5KW-3QSXIrqN8Z9b9EeVBWTQK_KnS0qITtMqh2tOVWmpQmTIAn_Us0oZEJO4vnCL2M0mCTjAJC6w5VjdJNHzqdT14V2qULxqLAHuBVd8byJcx81KymJ0T526P4T1bhMdw-QyLgV-zklK_xgRX6-fUj4Inf0Goj89FUN9RleRkGwDmgFzQ8SVk_1ZbPcdTaKiR3yhT4HKpyk-XD1vJVZ4t0SUO3xyy8GOkkMP1uYn0tFQyNNX6a4YppDZPdt4wjCHl5Qtlkn1KS81O-0EJrg-Q_I_acWn_9l6gNRRmUHgJTXTb3mOV_cVG1skcjTrGAUZfKOd1MidnbOdvBbASag2sa4H58B67TlfzGxBiXXSuWB-nDpQKIARLWaF4wmEbjYVBt9NExxxZ9KfnPa7KUWbAcYcHAoff2eXvpnQazQ2q6H9lierw1o8SInZfwnCt0BvGZYiJZuh5pc4m3X0AXt83_u2s8OmYGV3Ou1gHd8qvHXb78SkumGRdjGgL7sudNaJZUu7ibrnOAw46nvtDBvxX6RUmTHn7R-yfv3E6cvVkVL1AU3WMfL6V4lqozn6leMsff5WLdXefXAXA97IqniFBhBEC4q4V_dXCMt3wEXLqMOG5Lk3-rV-iaF0aEFeTW9ZTl-PPEHPc79LT1DARz_BEGrcZgacdnBbAHtG9sNxZ236PYD7wpHCKxWg0oaIHoHOLuPjg4B4Mcz38GGXV-c0D8Lfl5bnbBwdAdiwchbe5m8Ro3m5FjS4v4m_TXPr-4Cwi97aC_PhqVHOzOa1o-MFrLEnDBCXln4auEthXbxd5vC5OGkX2tzFsNfSO3QAkFpHDCAy6xRUVkyk9GP0_-dAo29N3VcEQc9-F0z9Rw8dqcu9OZSZpV3Qj3-hDzJwVGUVHTpZw-OXk1NEZPPIFmz_Zu1fCju1IBCq6WDBeyHpmyysOIH-G4PzvvNOP1mEnXdd74Tjl6PyqrPW2AQUAKwMeXTYEPbgUSavcqC2xRNhtWBvDqRJSTYHIpr6vztJ9giI98JNObc9NXlLiDkHPh2QQReR5fyq-Tot9XLxWDWiOYtOXR_y0S2RtjT4GjklUhuBh8pRCAo-0aiOFJCUj-oTFIsvcd6jJHuiccovTPQkiJ38oDqYi9ilO4cQddJqObOUVlbDFnbGn6rB4vN8n9i75VygQ694VLS1EJjPPvhGkTrDNsMhhSbW_YI7ojyLcJxO8VZ3AH_6ctU_p_gftek1X0hX8G0TK6zlnaWLctI8gb1dhJe8UTRkB9TlDef9_vpMpcNXc1aXk5M_hI7tq_WS8ZgPPg0S0T9pWeOr0Vv65sb569W8HriUVMBXv2deUMkg-3blVT-EmO4cL62sIk_iqzMiPBSz1-1_MjhddPtXE4MCktY0uKfSDV0VppS18gRJMkqEQ4I1DEY9gqynR3rYpgrO0wfgjF0iAE4KoO_AL0Q8XYjBfdbX0tVtoi-vL356QVykBuu6kk5Fnva8437tRWqLDBD_1szp4TYRIXTLZlpKr_tFjhn2f-345bsSK_6Zsa8L_-LnrcpyqjqK-22DUBId6Aa15bm5YYBzIUj1W0-3samhR1HRa94xC2GsMKDimtlbtG_9VpeaRFq4M0IQO_2o26Avp0y2BUKFG5KhGVfkCgwxF2RjjZsShq-x44EqeJq0FFLKQjt3SyI6Mm8tU1hWmLrfDRWjnOMbGs4iM9tnPsNZlLVTB_RgX5AlSThu6g7oom6ykl1ufeNqaBpmVwzRRFP0wwadHuFm_mym9tGd_1yQj_V-jaaBKopZuJEc_AGDXFDSW1RKjmw9s1m-F2HCzuhw7HMx1cI_uN99aVFotUJnMows_6c4KjC37P6bQXm5WEQFT5uoQ_WACJh9OayOj8lf2RHi0pAOnkLwVJyQB-PrOUexO-6euJeczMWdMEOSp0WH5QOjZZjck0YX_uN_dPi7LI7v7Jg49RYmNgtINLQqW-gtPiAUs6iTXoEbgJxMm5sK29Hed54I_f4cWXyCmtAP-ZQ6Js6AGwl2KVRu7Ke9P2j-4lKJeddvE77TUIUJ2cOV23SSAnXGYAGHbPmPpgtTxb0tCHwvWyrCsESpXOxInuu0DGbiG_L32IPpocmk6EnQsihrwe5twMw7eWOJQHSYwCHc0iFhpzFcGSb5u7R0h8EFvZvw2RabuJIOy9XowyJWVlmrInmDOSs=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36b5fd3487d0bed26cbbefbb656a\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqNnxBLN6lE-ien_aStL5L2NoH-DUeWNX5IB4Vi5TMUZ0j53iOxQblbA_2QCVPIflEWyxWwvEG4Rq8sWHlm8AFXdRtQKGVz2veM5GgmZ4IwxCq0SHS9254g4dcJIPc1Ne1AdgwtN72Qw33tDTsQuUCZk_MWD7oNp87XuiRqVXoKpdJS_KLbJRur8-oXSK965IukOZ5t75ZbuCVFMHXsYZ_A_AeeqB-vq3ECNWJW5XR0jYyG2iew-qPf63k548Ft76ylE5PxcIC8KsEdbZBxp6YXjbYFdtGfqvMJnFqVplXsrvboDxuS5ML0qZwlvZ2ctAKPoperqxjoQk7uoKa-_4_uGLS3hyD7rjunIOUaST8JfzJfmvlUVHAp3kxPjPk7ONzb4lJUCc7eX_NlN3wO-I4UPAEZXDGgPH6LGn5JpuALBJJAi6RK-fnqnwJce8vXqWWJ8FktiZEh1qUhJPWsAbfE14FuqEWd67PdMgLDCOgEUhvQ8ICm7iSdEXkXjmAp3qSJu_d4w-sJQ1RPnluHPZc1chckFzT-5fvSKP5jDhfgKQNknfpISsUtG8QTeroySbZTEmmzsno3p0ruS4sU5VZp56yqn0l-dIgcLsE-VZxa0FJSL6GcA6ksL86lff4uv9tB51CMexnV2xE4vHqDZnU-TFv68zSNIA5GNbC6lTnLaXQaJpgwYl6TqtYt9xpiC9YZDPvwRw5MG0SJW5WWaHLUyQHeW3TiGV8XSEph5o2ML1GPDG6UafHUk-QHogU-aLFSFNNRtU6Tg73t5xv0LVXylEa3DFujFxL8XZ9a1sh3pYQvN-FhUdUGjulWjV0fsYC6BM2QUZN-2pTgAwP3xQxGwPFEHfd0N2KrlvLC4LKEZScOas71d7K-Jw-T4Z7THxmm_O5SsbXUhpxyGMaPg7v_0V9c8Q627U32X8fy19SUlVUu8_OU4ew3pnFnzT7qX_Of1A5u7DrRLZ96hpoeQYPTFSs7nHG9AXruhd7dcAF5l9C68iS11m49cmVWMUGSzkB0VI8y9KjBrg7aO1ryXnj7ejelZXwZ23vE3SxwErgbHS76yiedgv3zQm2jpDoqzOgnQQgMklcda9BpFURQrCBMG4rvhvTooR-LAyPINlVBp_pTurEYsA0vra6owG_1BsMk7ZBCJjxz35YC0ROTQs_RFDc1R575L7KyUkfRwaOjFOjbaJCqsEKBGxOgqb1pgr44yXk32-OG2iQOcsjzVkWYcPFqHvTVlEKkHJ4LllQUGpli3N4468BRbtkcjmGt_jMGp83jDLaqvjz7o9WXKTi1W1m1PA_CNkzi4yu3AmSYF6MgtUTQ0V4nvsvjaFuwUqXWOwcr97y2VKwPpzwjM0dmhUCKP7yu2XskW92_yOGNrncKfcmK7tFxiEarRYP0lXcw9zE-Kc4aMIctaT8fcHLntkeOPJ_bqlTFoSjWI1bagjm0yDnf4O8n1DAAWIxNWhZxEjsv-ZN7VxcrIkhTOJDSEYtD6JpHn0fydbWVHdPih1sG9Qbfywgfy44C4sfjjKeQeR5t-cItqYQbbk_NaTCYBJI-4lc1XPoVA8PLkJ7YyTpEMM-h3XZMYijhUX5GLNn24G4TQNgiOD7vYbZzXfOVz4AsSYsHf2oBRDYIHkeWRdexeH-bobnhDfgq2SulLtBaXrS5FSp7Ft4BQTCaQeIUuYMdXD1GRxAd3asPkrwCEdh0nHp7OAn1JZwTZsWuVbAxx8S1l2lD0hWPJ-G0OCaKVfQu5RsWTdii09iECH7TSao_FsU6xydFBUY2rb9oiZ-3tAwaEcXsnIvxxuGrRzSjzLRYbHGzfDlsUvGS1hIPEL1zUm0FZR5UD9trxR1iYANpGKuXA_p_oIvhl3ChRdv6fOvDiT4GBwVT-WM2NdjMVfnCAs7Kxl9EJHWNil0LaQuVnMuFbrbyZzVXomwHrNQbZ2fb3BbdEdyLe3MaXbti4pfS0LH546k4HI_H-Mrht14fW92OTBsUHUIsp3gfmXvkZ3T8Uqrl123a3hHA8-GIkxUxnePBqcF-vNbQdNpeqIdvwkq_s2zJ7GDvrqUBcDXI-VErEiV5eNlpKgJ_hFiVX3AP1HaHMJvGoDF5GP9cKVZgZfq7LBsVzwPrt9WMQTsUUgoYp07ZYr3Eo3jd7slY5u3EiDmcOGTAES3ayeeEmFdmzuWDtkP_Pn5h5TBUl1AeIDgafx9pttE8zlq9kShZJwLc_7l98aaAfukgsoYHpJHxi6wX9vk-WsrUQbRviUzb_fULy1kyWYv6LfB84l6h66hcHo4KhVoUIYlwBiFQLfk8NeED80cRko0FM966qZMZRUryCWcX_kQhbBrTCy_MQpT5NrTHZ9wEpUNBScfeq9iCTQ-AQlr0j-40smImGZAMZDiuz0M40hgc5JwrhlgGNTk0hs5f48GEmYeoLo3njoeXhiCDC9Quk75-Ua4Cn9BxP2nHHfM468cOR4re3lOAleSCkHZ2L1slR8q728NQP5eFoK1S5jGM0ZucfGNI0l7wdfQGvZ4yNJ8KcV5lmyaBsT_GStQNka-uDWAwm_G27hq2PFQYtBKa63Kzey1W_JU0_pK9hBILUar9wZMD9z1dukspxmCO98EQV3rmH1RHCZjeg0v9_6opDFh6AuX_tMS2Kozd2zNbM95hQ42tqUcBip4zxrbRoFn2SOToXzErhpKTviSjDBojV-LMtf88N8BRn9rPkUJz_C9zscQhjs5WFJdoD9tSDZGEUFQRUqHS281jVleStQD0II8LhDbkHh7ZbVUYU6X06xtlKHTtjQUTIMn1o641chooA492jB__JrpiMfo7kgws_pYSuRkWgiFVEb2BWTC7kdt2uiHxsGV6prLdsDCOUdOBxCoYUt8l4dxNBNqtUkcaiFf3hlwVXgJLTGE39XhtW3uVPtVPvftF_oVSjqlhNQT9yM6K086KrZWeM2gjqPEj4yjMulPDWwqoAwVoCKrRlB3T0VJhBMoXe_60Fy3PVYsgo3RLHTpnaUMVcNu9yl-Fx7nP6UWABh3mWTDEcW94-W4h8VH2fIZAYFSjlJojdUcjQvhlJsFrwPKgM_FqrKCiGK8ohWj2U1O9b0NNnVb705cR3NMHY7iEFL5Ld3Mr92nLYdFzFL5NAtgyWcSp4_LuYepktMQMaZ03oeWQqp42jlXkhZMeu3k7vGzlFvEw2piLjZ4YIMl_YKXD_Czz4fRmWmm9xfDD6RN44UN51DPVBkuXIXLHtR4iVM7_ofT7MMVKABYntVr7wRYLloccjIcthFU9weGEfqRismHKUIt4Y7EAjpECg3F9_M5TH4ILwj0nMo6T_HrThg-8nBXZZDa7CBAYhUx8pU1E5dkfPVARRLg130jIhez1M97L5kSmwtu9QuhdPQpzEAYQodBDb8uTgt-vAVEQgoJ2NYE9zL0mzG-hkfoL2Tm2uDwbLkkrqbIm3IorDeRVHyPqhCIXuXSK4WpOgfZjtpIwb4WgqeJqngRSSldHssOSg98ThSZOGvqFnLI4no75Hw84WWfOlclrUhgWiKqxLbHYWBMpRgi-1ak043e0TLK2I8fE6Q7TFxuhusuSj4LFhKvflr4G7jzIh4b5GGXi0SUxPW2fAPiukTgPlxMC9JOOYz05nKfhEydMudz-HqkOqveqTY8CiMClHX46T4249KwlwHJpwEeVpRWaoupl6B_Ut-D7bWMXALkZG2TevgeQzF0u0atvAG8_2bnwz37fbYvz5dDduVU7kvAukhmzDV8W8AaqevkEt_IUBs769DwYBM77tB-eemujU2jcrMA5GVl6q2i7NfQZkfC-JLUVWsRehM1M-McKFb9LNGrlIyUbLaRDHPl6pAZryVPdEzp9aSHZoAMiRg9KVaWPx4-7E2_-PYN48tq52uk6vmtede0Pcu_atTvHuzGZf16mXCXsOaedrRCrzrAvlT-ftn0UG4L_Gu7cgKmzkaLsiowUH-oDHEuh8Iy1YTEze6VJRqK6-iLcLtzgBwumQIKMDQ6rhi6-Zx2R_DmB5CtfcmkxWGpOZVpZfvMnjjbOjPJeVcAGzXJXDQnum0QAqTOb1HU03JXQyY8iWXZwUSI0m2fy5GdSY6JEKYgcmH9S8GkWkU3ZQ0Hch8wY1ZUlvrx3PJEnZRxo0dKl1_5ota221SL_lG9Az0-Enw5i_EY7ZBU3Jnc2nGhaF2-kZeMVTLROBqAgvLNhIZO_e9BQHa1p8OUdKkovyG7vOldV_tDTAiq9MZ0uLJhIafRrNnya8ed6RuTADWgVTKG9NlGix_t94fBIMUpYTehwW8cSvqis_HTuziAPpgCWrAHn-wNF0cxo2IYsKK0r8mcON8hv3aAiEVSBtzL692yDj_GhvX4sXZyzVQctVlYMfAYdv9sgIn5GOYX1Alh-KLf6XeCoqtq9tQtsAX87mr87FilOTg7MGhRIwRwZjaco8Z2LhjNHj65ETICZwZZd1No00K_dNQbiqJVGbk0Y_L8L7yixwDTCdxjqHy3ohoy4PwuCLAuaaf2fmTndNdmU_jHOo9OpSrrfYaaGOFe6R4TU6yVAxoQxjqULcrve-JkTjpb9SiuBkHotacSesZJX-nUkUZqWTYqNY2uZYV7_zTGL2n_b4MRl3IpkrCrM1yiNI-CpBpC-CDDQIyZ2RP7mkKeIUYsug5NP_5Pa-XHDkrRSEl6k8csBaZjCkpzbkV-EnnzDwPGtcQLabZ_C97YH5KInMpoj87MozAYK8JFRBfvh7a-x10k6htNqroMT_UfZ14C4qhPoh-QHmWq-Dpk8QFbydFruJIlYJ0Efrex8BYiDHHSMbW5b_Dym7kuQqbYMxeGhRyzrGMP8KmqAeWSZUNvHRdm2P2EpZvOMOZB1VnOmMijYmsoTJ32ITcQTywkuef2KsQyW7a65m2FYdnV7UPxaA1OHRo8EHzwGJP6z5uthaW-lU-9_vaILeH8nSvApZuP9FWUaAUlSQa4UeJ0eb2bu7ciXAy8-bu1EZVOAPn7ms1t1Y0aT5ouSTFNKCmtbfAjHEWNf_KFODiXBUEdXHi4hU1zLPpC8W4Gr9N-PqmX7iNGxe2DOERwCqlFU4AfVINJ-9twmSN001c1DHGp7u_CiJPefHmNCwpveFrC8GZ8XK1peBb19-QIp-7OONOd1Qurp7jYQLGSYZt5rH2E7Y1xiDkUvp3NiDjNIGwTA8kYy6L9wKCgNjETSJVRIMWQodoqRk_x4Txyt975tGthYry-X7l2uYy4Ol1d3mBgrReCySJlPGgm-u0kXlEG5aviC8dytWHfYSSZwgBNy_hU5wUBEM9FJRImad7ZMeMCDqByw8NXXwAKq3PNEESc-iXUB3sDpmLlkkqAnubo-Al9l9_-CFxUnpM4_rYDr9FoH6vtjEeftNUPujaegx0u3EqpWccDVXq9L-wgllktn47NPq9gbWt7EKDKoXnV7tVPx19WByFZCSFimRsJBavCXzwksCjy0qAEcxvlM-7PQECpf-P7zB4LeVQ-A1mlDigyZdQiCGHBe7-Gpk5BeQE0vYhkTN-a88lh5lmOErL0ezluefDDCTNwTHu_vYCtJfxB4ylNh1MZ4YIhvoim3HDuaDi27M30xKL1IjmkwjRHJ0IZxiB1oG54m-aiHxzBdbuW9kpQ9m8UOyX0iu4E0cJJ_ZeRuW1BOIXWTJ_uOMEOh92E0SRC-He-BqWKcPQYOEljdwQe_EOMKxd68bhTx_2ewTdc0tCNbjJH6sy1Wf7ibZdC-9mxR3N9kfTbOlcOiVbjhhuCRspbEm7aSov0_MMZ7WB55-VLrDHZzDugXxBHm4c9RgmRLmn-Gzlnclylw-tUmYCmNpbhavuPCM6m5UvbvDogCuQ87zbl-2aKFwrqUAhFnR2NYRxyHdEUwPLtwBmdbHvDXCEM0oWMFcy9xy6eWO40ntGCZMJXhm-j0oOUwZ_KhoK48o9jwjBkyDCvY6bgkuFcfcLTPtC_eRzQ778t138JOJRL9t6c-iK38kLkyY7tNqbmOCVBEnU--TQGg931EOQTHp8vFlU8uRbEFtFGbAKP1QJB4iXxON3cZEg1RQiQMQ9kRC5OX09yk22IEJ6jc7L7LUFSNcTKwuCnGdZbxmL4lW5QD_2JKWwjhWo85W2ZJBg1oFXKKGZc65cWH8lZhMuQG0BBIjjHGQ59wXAXgQBF6SgE4e6_FRT0O11FX-qc_DnkTI6MCV0cpsdiTCWRUoAzxHwqJftzFP4uCyEBwZJLIpkPv2hVwjE0eKvoE6QwhUzSX5FPmMYwW-jxuv-jqAbVmkEAL6Zdz_cd9NUbAvDmRGCb8X9vPp10ByQPgiNUsBKNbxugvSdU4ZZCGOeo_XAWYC0zAEmwpcKLxaGQLZGUB9n6a5m8-YSxkCBTyUVbMJV_GpW1I95oeahFWp5Zt7sN5gTAu--5iuuMuYsr7uqaPXuyXlUSFGikt31ptGxsuwfjwHm9P_eazcVHQYhs5nAA2K6NtktVUh_8L-IM5fy90pKDCL70l--SWs6MSRWRhuCPKAoNbiAtyQP_DRbdLNGfPK2Tva-VsoKHV_Y-6a6B9pbIsC9PfA1IOKxfQ_88WtRvXocxAcyJArv5-LA-hR0tNl_4XbotGblcROJ3COR7yaP4gQ32WslVes2LCrxsDsJh62UanLOOaYZWQ1dZjhg6ew2ByS86UT1FIF2TzRGIf8NTBstKDodI2zpaLRCbU3oX1MY4-XJJTyAHo7XoJV8gw0g6S3r-5p-eIyaEPf9UKzJFPsbG-2k3N9RJpkruaKHBlmD9gU3K1vdUCghyJMCTZk_Qyf5-LZjm1jksntZmyOWXY8GoQR8yP0awjI-vPrKE523uwgD5FkXm0giWUmLy75wJGWWAMu19NDkSrj4oZYbhFz_5aHRB67X8jlgXAHV9fbtXgsILKlG7GjL8JYhl2cdN4rUuiQsdPPDobd7_yS9tz0IzJSbZ1Ocx5OuUlwA5zsAZtY_xLrCYgLvWOJ1iOdzH34CAb1Wo4O-FgyO80A67ogHUnsutUXhTPm5Pn6F__UX9cxFvl_zRM3dszO9T2CKSzFEC2ndjqbW7LV3VXGsT55G1pXh9mxcuo04HUpDbGbRbfHnGmDH5Or0HRuQ0ggiYR9Q4wKgEjY1yBEzo36wUvN3y4B5RqW1C1e24mYPf5ypq9sgGaiUNUrefxcNav3Y6uorNziCC6J8sx89Uf_nHuHBD5FezhRY5EiuZD2EezDKCOORK_ex70nET2s_o1RpjTYrdXZHNwf_meeSA1-PKWA7amgkvXV82Mqyc92iusLZWC6VdlS-qjCF4aDlt8FVZa1vMN8WbqC7-hejEe_eD5orQmEk_L-ImdFpqM9spnPk59BS34PZZK4Lp8wjS4UaQSiJrGedkp9zFucw_QNbzDOgjdQ4T2LPbseQvxxArJQIxEZ7W-3x17TDPimBshWSxk1twCfB7YfUR_V4qI9IDBAZ0beTnVJ2vveBMLYDo-GCNjVlPeQK3lLWvzO-TVIZE-g3BD_B3YFE3xJLeWEsNgdD_WnMiaj2k-81Bm07SSsfwrHU66xbhvWxRWBx792jEY6f7OgKxL2fVe4-kNCAlqbm-F8kqZBavT6dOpeATw-dQFqA4wHQOYyRx7Yl55xjGOlarqYrYf_Sq03_AtWgioxIIfklsLba0SyZEVowmN_x_F6G_6uPXT7WxbTgEV83guY8VbGfBD1U1jXMY56a9FpQ0VLyNyNg0BXSv43cSTAT7hKwAwUXlYa3HMEVaGxs-iiZcv5qZU20t1EHmmwseioi9t-CmHINFGsq7nFWkz2nt3WFJSp9gIroKZMddPBBd_83qxYX4Fhsi4Rqnw-wVn5CO2IhcOTYhTxTyBIDu8DkcdgXCau4UxwMvVvNoxvkvR02e9HB2ZUVpGljp2BQJgfV0yTlxfGJTABzQU10LjuHQr2bOS7lqfNtnfYKwrflzpEa4Pcvu9kEwtcO9k13j9RCrvDzcA94BlQUs8zp8ZcblBNA-CBOpEC2IePnbby61EUIXXIMEkuKn2VuzLJX3hYzCMen_J8Pkcs8c4g-0dL23zpyfzWAbmSnCxeYqbkXKDzpJJn6YgcfBTCjB5w_To0yJvI-SaAqc6FTeAQD3ACbT452OqAg2_U47F9iQtS-9cqhqO3ju7vKnpOrerqw0r3rTMrKImnQn90VN01NUj3EqZx9J0J4vJAAhmzer1XQfUUX9DzaOKq56b3c-rf1MVaH12mv1n9qElyVgGVDJfqZDgAzzwAw9BYptJ8_IFK0KswHtC6prBC2nO1JwHbwURYg5Vek4nSdW6quLoRvDBYljJ5UJmpDOlgj5FE_BwAB7N2usVLbMiLQ4cN-I-BdPkHKa9cxCixSJYxRbL_LqME_oxef1BdRRE4ZONxInjYUh1ZrH-VL6rFAlydBOSPPC7WxRNLd_gD-TsKYyCn1UiSFFcdb_ztzTwCi2KE_W49eamqRpGpkeThXZHpx08cjLFjhhwkx2cgpKekqah8Svp-G1gXIrMab0Nn8i8MZM19V_pNstrPZSi-5Xh_wvA3C7r187qHJe4zdcZhY1VeA=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36bb2c0487d0a2172993a365396a\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqJQ_Py9cpf5_uZfqnNCbmlDiYk5q-fnfJ419OjAfQqNB6_Mu-HM-YG7GLFmTGvlsIJbCLRsXqt6f3nWpn--qnDBwl3fKo2hrhc6rZoComKGrJM7C83b1_8805RxLL4kfrxlJdpWeqYmkbV3k_p7don_mcGeH1-Rr7Z-K5IMpvxnE3d_xBzooa5TNbpFbMPZDxk2ztDEyFOHcAAzqWSiwtbTXmRCGOkIT-KY-6wOemSnC0Yk-s1BzDIf-bBdqJ-1OdhICGEgLFptLnxirc4Mt4xA2vKwSGGm1yXUHtheC9_qEMrhqtG7YqE24lCqdTQ_KJ6cTTtUTeajo3etBq9aqz44GR4RW6ktB5y8Y61xlqOxN0tMEng4eCiAss0bC7Zys5XBwfh4FJQKpZf8A3wlKRSeCcnFoGYyJeVjIfQq00WRBqJRmaNgfrN3I0jSpik-1nMSnugjlEy4go6HiY3NWOAQzIoFksymP0lIZJzTjrPnBqM2UkYyHuBiHyeCK9V-DHbMUuECI_kTw7L8fkF9imDj0CUR7neACh0UNNH0PlMe8KDAnM3lrRGrYgNfYDD79wVTGG4ueW9hCizfQD5sAxaK534Nx4OTUZnNORVN_0FVpNOBkmpiCOPBoQVQTfUdOeFlW9zBqWvFCXJxq3zHig-UZ651HdWrmRqpfP_-kIZNZ6hdGHwMXO3gryU_QjQI8phC9toqauJ_FyrN6fN2A5BJ0xEjim7U_HYJ-DqiEiA36097vTyXgul33sFswC5Hkmd1hzWoL-iV7yBSYLO7m7hN1kELvEUWH5UUdwicFEpvb_m2aFOTkCECp6ehAwfG8BPo45ehzx7ivI4ikh81CweRqAW1oO13fMtQ_SIR_Ezh2wEG1en2z8PDtLDCWyUFxJJuPR7c-Q31SjWpbXxsucD4qxsb8FTFxxNt4kAn_jynUM5kc1DHHTA870M_wI5p-2UaSI2Rsyoh3_B0jcKKI5SaN__B1lLqaE_Ds7APaO_wLGF5RlVzlfBxCpsCDRZlMctxwXAbyKfy6wXMKCbt_1naZtfQyoLoh5sUtx_JTHHEqIh4AImMWsICZSrA0-aGiF7HYquec2tuQcm9uIxcFmngzukImhe5rz0oNYqYE4Xac_VCGlLtuKqkE3xH1xsyDc-ohVxmO1NHsvtgHlv-aBU4QHS2UKCqspvVFfOdi7a1qkZGkhioXSpTBmluQyaqrKSaifXNSAubWc6OZ6Aqrpr6im3evh8iO3FZA3LD1pA933WTKw9Qa7PDlM1YzPncZwqBZlslzBhprslzMKWwEqT_yXtMKQqsLfbZTWp6fdgao3zdtNbqzwWquF5znC_5a2jN0bXF9x56I2pZAtlrYEHj_LT10095h8kimgHt4h_8F7jFNCia4CJpR4F9nu5D0ojFPGbVjM5QYjSI-SF0wX3HTq9BMnE00h40xRij3V5vCVkJjsMYJDJVQEEbi6jz7wzRoZDwjAmMiEoSPCUaQo-c6PbYR7OgGaJ6ZYeM5mml5A3LbCtc-Cbs0traRIK_lqGJUJl2hq5WSHFCWlhxHgy-bEvKF9KcRud1aS7-nvxxJYS3lZnxdJwlvpkTWqtjLJVZ-HqBo6c5aCB6v4GvnhDjWJubwrjf0Kgy9rLKuas4xe6pK-DUin4LIyGDoXte03J_AA8H8J4amv5-_lC3eoEVpB9WNeXKtcLbtJEhKgxuJtrhGYYukC8jZhlzsuLibY0rivNiumOu1qTEgf4kwWreJVISOqLGfLciaTNAjkAkeXVqHQK6-S8YfBy_JNFukcXQOpJImTg7nFqf3iwcjJgronTxF17_JPoQ2hTp6rxiWtDRvcItGDUogC3iyJZ5Mj9QnPlSsZ1xdX45eDWutpXE14dMTIjg2wcTqPHVoUKnqkRjr2_Jg09QplGRTmRBGkOGLMbnJPk8yT60kJ_WD51PZog0lzewra3ZqKX7LV_t58JbBk819kUewB-IefqmfEAXgMdQKL6k8mjroHX7pN1BVSJivynrFFDRqMLYTB2cZ-_eGbrT6k9iCJCfr_QnlpWD4Qfuhc3BFppEtHadS2BKuoTsb65Srf4_NHHITTXdJvhjNrICxT_Y4XEDiei44SLK5F0sVK-GU1HTY_nyewAARqHGi01BksftUz_I3yKiioXlI7MNDrJaXHI8ZNaIWSX75Pf3039Rp6WeBxU5pbRqYI5oLp6hU_2s2U932nB976udEwwH6ZzjGakwqgi6D6i2Asyx2-FCKDARcwg2vO5o39zaclcT45bopw8FoyR0mh8JVQvEmbJtMrOkFtZ22zL4rQ0kMGgfae_FfE_RtMB1AqJQ54wWvkCzjKnvniwhCoYxH6MhVSZDpXoU9dBsEWs3I5NY6Q5te-DEluZ2I_2Z9KBT-oUlKc4Ydm3iI3UAdF5v1vdrnPoAb2O38DCSG0VJyut27gSdT_ckE7ijt9tYvWRi2VUFBgkjBjZK9o9GtpQJ8xwSbvkkFje4VHPPdj-_rgk7HB_ABYbBt5opyip6pMqUoMyvOwZV8Zk7NwQDHlUKIKyrZmMC3rOfoKhssJsR6adHtbrDNx3JIKT1PoVCXFCNx7RqIgPq_NGtssx75cfTHGe5wQhL3j-F7f6jEbUGMhFjKh2FtY5YXcURMPcX-lYYUF0wrmOD6uIwTAHyAd5S4y9_ZokokRf_D97LPmlB732aSRbKRElSFvH9zzSCwk3X7sp7TWlc40-_iW8gJWCLTjRU0Z9kZwyNt2N9x0t6hKt__2McfNBEyVQNZAj2pjnIqnZTW2EfDVDBkki5Gkt-gY3OzmSlsZhBpSnJE7RGfDulncZp9TydURAWhvrQqH5K-6w6mUGYwWEMfbTTiJr-YZ3K0fZ9ZHl-3hOUaOAWSXad5J3zowB8RByw3aW6wYx0Bxit_Uv-2601ST2_ZilMGEPNK6_YhZWkU8ehMGfWwqIXkyetfJ6n_86uMl2LNBEvb0qVwjx93bAd6_Sh2LBUG_mgejkUSczXGa4AgaWaq8IHqeTj88gpC8ThT7MeWIleVCKYMz-Dha3XnoxvxhtYS-iMDgm_XZO3lpqk9nkhFkZS-xJrkA5B0679vDzxOrB1Z9TdgRMDxH4dqr6SvGcJM9iwrrxSGWG2chtjQW_iS9s37bftXF06LhR5fTlOAGK3hwG4jY2OaDUYEcicJCs0NQQFrgio2K9xQgG8T7mAiXEaeBLERa3PGvhZlNuhP2bHk64fokA0cK0Fpp8q9DLVhN6reBce3H0GX5N3YBFqJSlKKj-DCQ0BQ90IVdsYz0IWyWth4iLMi-7TFeTy1_-ax0hCrD3UQuOtyRpjZ7KjtnvBTNCBs3jebnpYKPcpDCFmtQ-haHUnnb3qFZJ3q27Pm9sxVQUxlKvrT6Eu8mKjUqQbRcQCRAn4Ah9Vw79RbnrHeMZCjDriMhue4m5AWDUMursfQe8rlHhLpazvXlQzx_DhBakWWIwvPjCEYxWijktruCuIv0sR1chTc-kOgh9eCnX_8KzKOwJCrvJd1qcz4IBuC4hPn0-2iEhYSsVVvrccdu0uvfEVbwd2LCCUJNNuaMy5VpCxbmNboB46IZRP7rI6qZMZhxSMoi5ssbI_bZPxto4YQku-GubH1HUJH1mMNEvxDK2qry0U4vBNzaJ1wPD3mo3wh_euXVlDV1l4C6una2HgBEgQlWh0P8wmwLDOZ3J7kluNWT8Djdg93Gazh4pZlDE5CNnQ7HB6mBH8jD1TiEa7Fo_x5hjg33q8dSjR5WbYfjnjTsa4mEle88EGRyA711mc-t061qX7kpV8kXkhTEOVm1khArfiSmZsHXZEYXmZcCPKKtk1ZGz89dvpX4V6PZrgQNrBR8XrPjE48vqt3IhdUoI12KnZBC7PDGPppRBl7CQLxykUfdno7qVk2FFcTfcB7Wzv765tenu8zCzVBEsJ5M_hN3O6cVJMJa382wXXJKtc9kKuVCr9U4y0J8WiIuqpMtlbttW2QNi0-LTGHsIuMs350LPu6spJzoZ63ejeRxmH0tzvquJobZOC8LZzcqk6noyklr3cyJM3ZSgNplX4EvZJ93hpyNIdHSNwi9mv20bcnPmGP_ftYjQXmE0T6y8bE3lzWLc8k0g6BQ_gRw3nmnpGindT4NmFy-sRRuTA7SSCHxfO6Pou871C23duC5bRpAh3RXkzvMxsW7ZEfmyP7QOXzaKFPEp0lkuteWjmZlX3C_x2b4RmbJTJzylpadMl0WXlvfdxKdQnljs2PlZD_n48IHoi4HOe9sD20I8PVpLsKqBqACzS0M_vQKiBP55XVZ6L67RlQNYN72Kbwmj9cEto7if3EC6RKI97nL5SS9cT5v52oEUGsTfEZzw-mcsm7_yzyEZk3onHuH5ZMfJ34RfeXqcwkgG3Wul6aZNy4lXO1uuDjhg2hZR3xnbN3g3MN4WOOoRDrkjbEbjDs75J8fwEplzWUJod7R8_aV4MYYVV0suRZ_qE2U4fZ3V2qRMw_NXXrlR0JkBACIzsoSILQi6ncM7s7wE1zhPxSoQEmDyElS5v4sEUX_KaVshyzThp-pryn27-oMhvhOXB23McElyBz57Lfab2mHdOFY2V0mGhKo4jXHF9BOfORB4bZADVJrzKPub3kbwtQ5jYurXTzacT7Cq97WfOW_lFNKRpIa2rGlt47UDzAoyROc-alrzcaC9n3TGTC2rwX3frfMLn5cdOja5zQ0hmRrWLfdM84MXIHC4htRAi8LeUPUY9hNbHNovsXenJokk3Yp2ztoOJ6aQb5-Yh9CIzQzfH03Fm6TnDdfwSnX5bk5d4XppYlj7bmB4oZbaeL_McUg4hRmflxH872MAlsSsBpLq8dFeevQljbIybi8Tk7AUO73RGfzT8uKij88kVA7L3chf9YQLcTe3Gnjbw5YFmrEXdc0OR2F3qTYZGY6vWuJ1j08jPO4cKVBUrixFBSX2B4hrFAUfhBw4Y5QBDtfW6hIYDFDiZkbo6Mymsd_2f8Ua3fqCP3w9wR3FywhK_lCyhcY_4j9XbsK2c-IKdT8Z_U90HxdzrlYUDhg8Lz0yJ3sjsNpLFiVjP3rjhNPQqKVM1sSf6BIM0r6AY2ONBUGm6Su1zFolTSh3oWbwv-fPtzyXCrd1bjYFop9pB3hn1NCCYChTQtPRlePXIBKwtpzBNeYXdCgP9Nbymzs9Si1XOqtPwkBgLVTS3hOcrnvmrdmT-jK-PpAXWq9KHYxJLLt929QEwqONpEj1gD-Hf0mEiEpNUP7ZHOvVt6UgOsp8O7OdvtjYDqiUKM1BY862JmnlzRvThlHB0qndVSoQ7bRijqm_mMA40L1_0W_UGMLvJCGL58vp2EpkMS5im4NKGMlJJoH5n8NhMpwV3ammTlx0WU3HtmVud6h-n8XX0-bMMuMXNZkiuYCEX7yefqGrU8CYQKuXH6VuO88auXq_plDcKtc5pa9aVOYBiJlNMtEg7U300DT7yVGcvgH08t7H4LgdMunYCL-xSADlzVZKlTVrCoZtg4MtryJBB92Thw3r9_rVyRAutWFhKa3eF8KGBVOdi1FPGIEIem_faaCR1becx3dbn2LdvOR1ytu_imggLyE2EByd7R3TfqT9XyvJ2RI8jKwdsT1AsfcqD_Uh2mY-ke7a6mtAsTMds-ZPM621g4xZGSx2ZVHo5MsloXk1SMgsQ3-CA4rH9e3olJhm5OT54y_N1jfYrC6CeR5-AjMeLOjkLvaW48H3GBL0TN7O0vMDXz_KGk-x8C1HpOYt3FZsDswU0HThj1azSiWa109fExW8e6Ei4kZsnbdB1K9tI3kYOXFg1OkxyQsVB2mKTHfjavtzR2ZowARPBlZQIpsMwd3QwqKn8bQaI1cxVwLCrJDwZ0Rm94nslttzNMduzk6k6NduUCz0h_2mGoCc7r_rJUMGA9qXNHUeA3m9bUmqI6xuOwDJBwVw6gJY3R9ZCzGmqbsjQAnmKBLZSbxmvRXHomzvH8kqeDFfLJRApjGlHC2x3QYyzrYsTiJiQNnAsOYp-BB7BZ9buuIEKbr-LJtrY9xH9nH4UJjceAYdJUTqST05QZLxD3eOeGn3bATpYgdkvBCuRgKT0hehD-TzTfcK_XBkugwdlawphAqo9mAViqL6oR99Z9Khz-jBOadBAtJKoG_nwGVGrln9--jjuzR6x_-nbAH_HBIR4Mf1zokkBXscCSjA_i66Ylc-0Po8DmhCrLQBHEcMQFieR3CHVt25sMY-i4YNFRtuBflrpnWfr7eaCBZWIiS0VFTMTgwNCZ45nGHx10V1uD-_sMnng42ndSNWIEfsZofm7VSPmGrJ8hYzkKZi-gOrK0xuZBzHEk4i8AGua7EXfOzh0xsdu-SDb2d37y_SEFHrUU2BOlMIjOhAeXUAvARpIx7fm3JL2z9YL2DKMPLGoWjdz2z6Yz1MEMP70ZQNXKvSFWJNKYvOdBZ1fppITAvZsbe07fxhCpqop5ky-sHkg9gij32brBJZCHlSKnCKf2ztUfe6WJeGZ_4zLjFWJRbb6rGpB1SW72loBILyrwDwSG6l7Jp95qCMUCYn0QMi_kWMysd7OOWxzjH9aiPTnINkrEn-5BMDWUpymwYAIHDduCGAXXC6PDGr0AU3GnNkt1KdqL9y7Sz0K23eWRu8inRd1cXFwISlGRCykln8GwYyOl2cx9PShJ6UgK1WbzHR4R6Lfg6tvlxJNwnmciT5qfluOs3-jVQE9O817d4QrmGYHnAVIdQ1li67qWDrqpsPoRcrKEFXKpbP3NLICwXDcti64rX4zeBJg1I1FJc6MK_JnotF3GIRNuPcq6Jsa--PuTrDesp8wNn32f2rH83fPXhE6yqNmrn7Z3pdg8iQmPv8D6sYiUvjpn-UC_1pDDj4GdgeFvNrAfEu5syrA9-zM_C2VCphdauQfbTT-KrnGk5jQcEggf1MC-Tz4TV10wMgh0ZqkYBvBwHoJQTXQlL3kvCCUA3_HBuEuZE8_yeYQp6xFNxQ-aGtmVDkA0HuxX_qDdGK9tS5HB2gLpZ5yk9stPoyfE5BltIDfB9Sdn3kIgmR53wqZatP5JaWdqJGHZXr8z8pynegpPTNUCAzNqHwKVmjnhxKgPy5ZoghEfvXDV7f75s4lDvGKKHalijK0D9s5SlkuZUrwnhKMRmY_nERBWGx1I3WN2FIrUT-TkPvntgvjRyFRgXEjGSkvtbQXDO3XAUZDLzEXLN8Dwsg09TzOpN-OPcvfZ-LzFKTSY0L1vGEfRfA6NYXfJnehiDonr9IoyKx1mXV8YrkEnqYmHJkR7x27vjPPY1_SkbZadpjuLYAF6GDA3etVRWnGKRXVH6zOrC_vAwHby0eWWInv3-gpSko0FRqmOd0XOSty-1KqBObcsCfZWcik8RoR8zBxSTctqQZDycfOvRce84_AlUx7_w7UDLbMpjgherHNg3HAeIZ3RcUwVfhKnMI5IXnbwFS1oiIfDW0uNGzWI9OH84EXtYhDSKC6UNSlr4BgBsiAUXQDHNZ-vIAbITQTcntMDzGfKyH72szhZzB26iJw109IQJa0ODiUrcbTs17BOcMdtVjycxOg4FPWD9Mg1xOQJhUPHHstzeUVP5LB2S-KdveGz-50b9xEINB0iC5L2-Dbv9K_UhIDgwfHDzdu0XsgQS_SwtXjlCp-Llhuv33JPNfflQfbYKkkJsOaiojxPhm9dYD_TpKwhMhA3e6VhseH90WCV3WMuRldhEONDj9LJ4TA3NBdkNeSCHdcNw2qkEkzjdRzIWu3mZYl2l5z5PZJXs_Hie9qRpgMsl52h0s90=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36c01f3887d09c2e7093b4f769ce\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqvDJWcVIexBqnywTKJFmLvbPrb5F6_6mcJ0Gy2gLOcUXzHHh4GgjUwsw7OlWatczSnNX_TmodDB_HaNDPZtxmBNINatcjl9cD14Xkk9AP2DIZ9tHb2eeucQmyAsc0hhzb1sXnov7jW4Dvp0PPsrTFTzRuFhthGxjP51poxzcNsl6O-Qy30V8dhr18PWJXSkJDClYUUYnZoN4lCMwqQf069Adbpkk0slUZ2t-vGPA_HzSb6Rl8cjNUAfAdTTlGyjU6leujfIijKxiPoF4RucPFtJlinlMyt35OGBduyRwqzpNgcjCXhagtfekG6xgqrcko00jL9igHvWKlyn-PoVITM7E4m0yJkd90uzrg0mMIzMC_Ao7qMKI7OFekMtxcFzP9SIiwQA9_gLCEF5VIlwG3sPgqO3xipm5CrxIy1iVccY6Ihp4zV1jl-r16-QMDQ8VA703t4lCg-KCmX6HqRAOoiVUrmk1fzpKBds_JPKkFX4kuN9jVMi87qLCSHvlKvNfdZbxRaSLhrGT_A6XLDTcLjJhjbivfzfllSgklWdDp6SNBoL4KbA44fPZhuDa-t2CD1xYZRgvjPR7h6BFtJ2ySjTkiLd0V_qLXWH_hl9l_nCg4WcesrDGhbDMtcaO_WvDkgbhBsnF3sG5yuzhrGS--x1URDeE3x847oumqESOIwMVuescwuguZaMEY-NbT2oZ0t0qDq2jg3kpR4Cx4Qb5qLtAym-nib5GQbkiXOlKPXBOcrQhMvvDI9HyRN_h9gU0zbARJBz-tmxTSI4jkbKTz2Nj3od1NF5IKZAkw7JlSXTAbTD1QNZSQFoTNefQZydYeG2ciJ8Bd0cUMcOpA4vZh667e6bNWPTE85_83XRQPr2vR4C1pKPc6L4rMJqTUw71fJqcTWbDQw1gZHiPAKVVRNXohGIXlxw07qv4dJ1ArKhMh751D75-8RXuAg5bU6o6MukhPxRwGWEDw42cfQPtHE2BZsB58aWL8jYsW0jM6ETFMlDKUXe4olyBxCTp8qHz-ZU-Zy0WroFo7jhbBHjFadyS2G7BP75pq6yfNyaOEld5ZpZovBXkPa6ZEQt37eTOyncEIKzbEbSL4jpWVa0oD4wPRQexQdPNjYAmkNh74XHO6IGc4IDmulxSQdgYfeJ2TlacnnsHzh9T6I2iGKnD-bFQk9mfxmfXE1CdFTblTvU2O2mzb-Jq3h_AGA72A0CY00yxppM0k69mR_0bhuEeO97M1j2FHV62Nw1uKAi3rTFpX6SEBsfvtZ_ZsfTtdO2oMtY8R85ksOnMtYBCQju2w7yGkhAROBNQlRz2kPcsP7omZdQbvxXt0fYI-58ii6m8YPhQLd0xCEJTmvyqOKwrrlSXd2ZYX-bgy17nOrd8ZnZqLWS18i2OjfGfUJJ0owylZG2d8WbQmn6jrQo8YYz6u29zQ98jeRjfNu-e8oUkwwI5PL2if60ssIKa1jie5cij7Itu5srgSwouDzZeI1HRXAuXYbOGI9VMQ3ihFAUeGFdI-LDfOWr7y_h9ZyCMAYH2LcbVRQP3w23y_6rkHNsvDu11v8pPNndiYkl1mcIk7HUgeFW2aUPEeQRZTzULkf9HKYqDz565cQNgvx2RuDeMkPw1UDRqUT9b0Yy5sZFF2H_D8n2AMTjI16dUirGD-7JQscsOvS3mmgcUoiDH4YOCZpDNaW4snKxR3ZiWlyaIEZDAPMJPT-QrNqn9NR7O7iVYghhVKvc1ejjLzEHW1gHIcmk6jB9k00iTjrHRgCXIMOKVhjRR4v6Co9pIIrv0tZEpKatQESkh0uwXOmacxqZ9Kc_UD22myesKTFKP8tAUMuonqRea5i5UxvbcuF54OkXpHHwbj7qfb_MabbjMczRbYLRCALXfK5by2ZWSUtq7nPZjXIksvxnDT4hNpIlr1AZkwLiwNtCXR0F3MHjuPj5nvbhXO308vMXo6k-_-5Crtacl_9pm7dq_2xAOVkLnTAb4ohhHYTQRmJhn2lBu_2nCR-2QUMP_DSFuRDrvIIoEDbqvFkM5dVvfA_wKZ9vTr5C_z-svzvXYJ4HZnCqYi6CF_FgP85BdzWrXVQu7oAHpfMwfymcyekuAx5Pg5v1jaiF-oOJONY7KA-BB1SlyxJSZRLuIqSA3D7kjwgV5AddIEr5LGqF3cNOAqLSK_Y-l0K3xxb1wAQZlHuBLq-8VFXQUJhDEu05iMJBmcoI-zZfRo2DyXs_0VK1pzTA_M0Kwd1t2GuW2ZKI-mZgqXpJ7eaEKuNSgPBYQQzcYH6rxSyJ9XG89ywoTrHlMD53i0wgiCHCmII66oPJJ6abjxaMD8SZkV2uNRdyL9jgEJ8mheIp8LqC_6hWrxQKmzLzWPpjoZ2GLnCQ-2KfmPs8yHTBHkYS0k4f-cr5vEw5vkYa8bxhOok7bbvyJZ-Imc1sMT1WaT5nJQUH4g6ODC8uLRck0dEnbbwEbz-4vFvaMzZpLcTC7Kf0qi4JXGa1SiMRmzZ6nOMqWaJYlP74P52AiitVkrd3_sDAZ5wa8FQeEojhLY-HntEQZU7fRpcAoC-33dR7OW7SF8CBNqI-wTJ8CkUJxnwAWqgzy1PtSSOZA3dWSbjrS4YZpiZMjfTV02FHYt3lexX5vyt34vxuTu-lumhy8OjKBXQCEFtrKzxPsL5CHqpXPANfFfbfQC3WtWfaynRU5WTpsz1af__gGUKOp-_sFjqKRnbKQhNzMNZ2v4_d99ncHAjwY1iS95AhpFq6ZmmIPjRD7wHXXFLzrjZ_Csyd1CrhIpuH1HZYvldPWK_Db0rtKgTXxAl6MvXi6hOhHR7HW3XVuIKC0LJ8QcmuymPvtJzeZQCOBTRrS0_PWaNI4QQOUtk3u7TnW7ussOQlsA0deC8RboV0ppuist1BwnG70rvVc4I9bFHGwOVva62ACL8Hl7w-TkasRiOK7GCbyuT2yxbgiYQHQfWwVt0k7AM9ltTpJkCtp7fzLk5UWhNoCpqWLUjcHKVjqdojd0jTvLMxv8dsUVDu6T3X1LPwYWjtQ0dOXcJ1FOFBtaWZ0fM5xi9FIS25IcdWUCnlyK6S6QVL6DMkD7xqpn2vlZw1f-dF1bJ0sNDYTuBIaCuEcmQNz9TB1QosZJC819SedktQrBH-SerYPtXgEHwULHuAg7yrLsv384TMiN0QQIhVCDuk_VKE7W9O1i4WcF20cjogRh54iWvPrpijM4ychlrXMlo4XCMvFhrxZHdnCcqbS3ckyAKaR3mQRBbG5sxp4eGitgIW9NAFajCDatavbQ-NQaPE4SdvA9Wj8Kv8PC8q0TrGcbEiFyej8HXCv413IBgD2YO3mcieIICgzIZeG8DNGLINjdsMSYNYxsLQJ1AzTG_57HNKBcYJ1WgOUZG5-j48qF2frQhfEBfpyUqTWPRobTfenl0u3vwgHppg_n0ftwKxlypiE-lLLV95ajKtQkIpn4SRo2IaBdZk0w0ZZc9HHPV8FSVeqk1UDvXwTjqyJ-l_1ETg9YmJE-jCfFdksvqNpSDZdctF5PZJpMSmWVmOCO_So1FbO0gc0e1AvPyzbwxrAII1GfjYEX18aoaLQgPnuywJrQtP9sPhOPEU-OlU4Cx-U1AE6dg89NRzuuXxvga0VTz1ELKcIfXudLse7uhkj0WOWwLagrmrhoLqq3Gs6_VX_h1u3M2vOY4OSPF4JLV32t_dCaRp87flejW2GRww2D3XRzsqFnQDFFWsZ-aI02fsrH4VvsvWwIe0VscchYjRf-cKUZ6TVX_1Z7twCk9p4nxtsMYGBsJdCyF3GEoeuwGlSZrqGNikdjHFsJP5ZOsW5n1QS0fsvP3MlQqYiMCHKGcgk8lSffd_8GE7h6S6WiZT3fruADi4ocUG5PIB0ULI25bclAULMxOYIUAHqBbQF9N8dalUr4u98dvPCbQRUhr2pNZxQxp1EosSbQIXmd6FjAcMENixMOvXx5JB5bEUSX7L7py-5W1OGlOdGjWLN7hbqkzPJ2F9ctZLsPeU5MqSvBRVmBxi3uksqP3b_euzFjFhB1WjtkpJb5WCeKoqI7KaPAPY9nAOwPuEg4djzgfiYuppNgfDxAbqT3dvPvk0Dd8kKjHUIqPuBAK29CTCdiyoWDznPxb0hM9TU7NeYkya0Qb6MWAaXx5Lgn_at0gE99Neq8bAoGTEhwuiPBZK4S6i-a0pp5mh8KpLH_hr-JZ7TK3QvxRaB-Rgsqyh_eL1yYf33mz6D1dRm08w0EyXI6-jima_BNxrMGEtG1YMru0a6V0TUwGjfpm6X9E98NtnaUPC3WXKqn8AiJFLWdfw8wkf4RBadUw_Ug4ox_tKKE2pqMlRy9KPnKHTUITW5Qo2QQfrC5YPXpMoe0GoJppvAdIfNdrT3_Rku6X39_LaAqMKGnxil7aQBwnnPmyWpKqztSpjk7HRdSO7l3KowFibpCS9Rp5XTsUlhg2Y0HWbMQN6zUt2piBtVp_tjtkWQRnCiIusHn0szNZ5HnJCf1OOLjiwDCi5BAk44P_hw-k0xcfgl3oj848WZ1jksMAATs4nbBwrbHLZN3YGDOdmLsUDf5VaYrXAdFbsbTO634UObPd-pHhICpnxSW-x6fQYZfRKPIF1JOdrhyJPsyb_oVTcco7Fk1dvCp1lumZcq1cUkzqY-KP27-UY6aHS1C3XbDYppD0he1h2Isn79d_1VrBA1fpqmiVb3iqa6R3gVG3dBeWvzohre3cYEyI4eWr9Xv8xuMndiXfqEPMRUb1rseQuG093cPcDkM2zIpgsKuLc4GGeJmLNPJNNEoNI66HLjyD0-uQWH-LwgM84IisONNNLiX9zAkQzdcuqRSRknWTt0kWS7H8tH6uUkuEBI1apG2i-MujIn6nGc6uUvr8xAMD1VhacdKb15SD_Vjhfu7-P27RQ8L_-Jw0PBugJR372BfYClDi-s5FXDzLMR8R5KUGbCDNDpXaNPrNF8USwEuyy91jX8tnuFQ6omHQ7x7L-NjCVABpVOsh5gjCTJ7gif3ImlPWD6n-VqNAE6CqhfIST6oCk5JA_KtEOn4uRKZUpkr643n0KVb6ZtC83692IY6LJtFix9oZc9O6fDNy-DOBjH993oIOf1Ypy5tlq71BCnIpDwlQcKMNLSKDoJ0jGdxoTZqyY4RviT_fCkS7E87sRVmkGuVOGqmhnPHD-wNxzlAOlEgJDq8ioryfbaHvqMumJMNj9hzmRjEsMXEodb1SyY2ePMg4CQlM92QnCGRnZq2TsQ7JkIqSHGpBR9E_rhzdIqa4ZZ0j2LCj9WptwcdmTxin5IiuZxnitCT6UJQzW53hHJ7YgmmKJd4lEQVYidzfG9prVBSPir-1y3ljcdQONIsWcPkyZ4CK-uUUSCiJ8n8e1A_jJCThNlHg0Yt58XFIMFPJCEYhCfB5YTc1BjWt6zFRhc-T1aRBrIUooeHs-fwj6jqaSzwSf23bz-RV005Jt0vyWv4_GJE4xRg9fZS3sQ84aDVBl6EuoVFFuqol3Go1XOwY6luPtb0bRuzsY00Tra3AVEILIY7ydL9YKvRxJldJq99ne7FHjrVIgmE3t9ssxmBpvXwPe_q5ilgL2HDt6nhgnW_34lRD_ed8e4GQ65-0DcKJ2e_K5sSvJCRdXq7ykswTTyVOns0lcUViHw7imz8n68Gn4b5KVZCVsh2pZ7HFUNHLeobXWISDn6-Dmh3ltR1RJodAIOSAKsqwT2SzvzOy0rR1p_vguLagUSLZIDtPkIJY_yMc2Rc8u7bLxEeCoGiwb8Dw-qi5SbR-v6IpKpiGo78pXVcFNLaHvPuSTeuXWATEpua2kcZAXZcT1QbbTPRTYklpVzRc3lA_rVWJIbc0lppar5zOG2CS5M6cRt_nrgPCL0bO5nqxHOimloKDBxtv-ehcigMgqSOcLjHa2tYpOSLyWuUiZcmNe6YB369YYvg44uZ2gViIxhhasKAsDD7f6aYz2MmDOUa1m-fX50xqKI1nu5I1OZmeYMcXH1hGPIHp-GLSnFPukGufdMllu4cOeAHpCaFA9XCIsTeetYTcTU9-NU11XbJcx_wcrnl0WupNPyfU6LkYjUiQdXAMC9vlNC9GG6wSJK_MhRdRkMPh3SKX2wRd0qsWeIA7406o-WXcy6wvSDxhhqaVyZNJDkjRKVaKi7XWNKtTOSLgS5uPUKAjlVzGtDcSCUx1oZKMFSU8Zz0vrtD-RBmrBL6GOEymaT2X0-lIfrX5eiDCQVGpTt15z51IAQy7TaMzW_CojShm-qiZ3io7YItBJAtpTWV1fgti4FEyFa9U83Px8fw0P74NtX05EygrqsS7_rwAs2CZXfD71lRWwLiebD3lZKOGl-19fxg1Hal1jjw9FFS10SRjQAVeTiRhIPnksIPwX2xKKXY83c25zbIGhrnNk8SdFO3xMFJQk4-s9tLUTZMjy9Zkhepy5uhbwEKzY8cJvbQZwQNYz-EupCR9z7D-3tKihYm-KkZAtRKeiV-3wXsI_mKW5z0ZkSuNXIFocm2z-2WMwRq_-dgt3wAlID8wP68hfHJZnnJzJWxGIoU4Ia1OtlmDgHrwPdrXzEBfL5H0tAd4BvAIF2UTZweSuGUV1_LuAG8U4nSLrF92homscH5lbsd011j-ymg4klc0k4fOMYQAD9Wi0SsiBovmKAt00HTp7zCyVRKbm9PWCKKq8FS3Ffe-MZTEozX2HtsN_n8RhmNp2xkhzGYzhjj_WxWqpCj-HT8_n5ep4sFJDlOSA-79K4yP58K59oBWSZjdmUvcvUh7GdFlJNCmpxQr6Ekw52H4m4kT5-Z20cx1Ab9HJkidnurq_ik-OcxZLX8l76noCmjfCX_niE20Qk3jO73ryIcKYrDZTlqrLAOTjy92xhzf8vrrUQKhAcqS7G0Dvh2kmIp6EvQhUd-Kj8jUi8KP033HhzOt4frPI7QWx6G92gTfoC4Ey3zkJpGJO2dO7LQC5VimaJ2KbvtKH3Dut5LkKB1Bj9-2BGFJXwR7SkJIvcxDV3zf7EYLYX-BcHyBZS81BV6k1vq4saOuNGwHbbA85KzVkD5W9sSwo_gAvm9DBPr-c6EDT9iBZnrBI4vaESyf6wU223bcYq5cz69yWCCdb7SO8vrC7wX9Tji8coSE7bYSkT_KcG_ItHCjM2J0n0_L0rUfhuNtcSW7zUw1ER7J-WceRQrytxx00tJgFS2yEgVARyGgYchsFksZ-HmW6oO0f8F21MO2N9eyojJF1eytduKJemPnFMSkOs1nDee9OpGQmVXVxF9HPo-_qCXJG7A6rGMsKApWwXDWzVP2fxEuwHvH_y9iKI_N_APXWAy8DU-Rm5Qem2z7frU5zYK92WFODg5vTLAvmXfXGgtMyEVOJpymLlTtp5bNbaHK3qJPgYZNIrkuKctWXUEiDp2nuaWLblQbB8HxFczr51yUX9-oavejoNNvSet1hn5D92Xm30ACIIn8MNngL8nntbLFiDZDwYmZ5cpilOa3TkHpdVYgk9b1m4sd1OsUS0VvGMBe8rtG_6pYANhVAE4uuNUp6MhsGRMZtDGBhZPuU4m4wl7ZJvwS7rryjboCJHsh0oTuPqYWYhzp6KLvKUDjOWPc2Dk_KkqEwlCO-sTGFgSZYDYuVN2fKtqUCq9MYF_uqgG_FM0vIWBkXEc1I9QaCbnhhJIkmts_D7na6n3IaporiBGWFD_h8N460wE8uEklTaNZDamhtKtl2mmi7gSYQ1MjW8KRpOOmAxHej_PB4TMJm8VqYU1CkN-RQVgcRGZo0CYC_rWfffJDHDp-tfc5O_5CS93W_hsTqsb5FCgwPiFy8mcrzs8JpfvjKmxkDfgD_f70YI9ICoFnSASpw469gCp-ZjAShxK28T7MlpBQ8tSXyA8RiuVDobGQ1FpFbF1v2aLxxWFurrntmcFX8YEFak4S0sYl7l9l3NWK441HzEA-hfwzH7Q8j1dXb_R5YJJ_H3qA3QjKa3KwxhQtA==\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36c4e95087d08f17c0f30956c40a\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqtu5dj2bs2e2ArSi1RMoMK9qwVcNkzUXIsjkhedXxC_Tqfj0NQoQvbQwdR6JUXSPckmH2N5zHmv58nMiT17QxO0rUMLakUv6pmJn4UBjNRXTxHr2nKSlsSCWW5IDr2EUoe5m0xTqdF-V2KHJ1JIjpy_A7iDiEAJ3SW2jDVsCwqGM8lg37DqZskGiRNbXXBbvWVEaFJ-cjaeTJI_W0vF-Ft5hy3wnlho9wOjeF-f8nInjtk5TSjbAMd6vYnw1fA_Esb_EE63emejQjpeN_aXyNW2_gG8uH7LoKHyodBR3UJyX8tBp_4Wtj6WIntUd-jhnyNzGrQ6bD60r7HXSSv8ZZ8BljZ1cNmGOO9cSTniMTacErBtKlHgb0RpVIiR5J2d2JCjIfSwAnijOWaQCkLB5TWgRqX1KqgEwW0TAflDrJqMJV-jSInu-9LiEBPG6y_3pzAu74qyJCPCZNNfcnHrK9_Nn2tJLOxqAVY1qMSMfh60z01B14cGgLIAb9vPy0JgQG_iD-kPAeBhxUTo0RU9AnqPLjlwCZqzvwaputHVMKiPScGrM5zNpbxPj1nP3nwo99iMXLH6x8qRz51dUCPEXcrewFkXeKDMCv0Ub-ewjREOa7VKcmNxx8ojQ0Q-3m4lNFg0pU5WnFsB_lafsNjZi1XAuhvhUSONxr3H8T_S9fkNL8WH8GjLg0UPP5SxyXlEq2nLuNPZzEVIN-uXjsLavPoogWffVggwKnViLJikwTztpoTxHxrsX2jNDztpdPyJz1K509txg0uYd991hvTg0ZEgX-34gqNMs8Ml7erTRxwbbh4nv4PawG83x61TTSBT1hm8v5HFi-f8WlnTu-H5kwOdcSxG9mn4GCuMMQA_IzhsUHtYNO6ZbnJV03hpHV5ES1esa-cLku53GPnntgPCx0S0HJ-mrtcvN1G6lngNFseYosBGzbZaeBmDyYI5mO6lv3PqPeBJBz5Ri8ZmB-1xPCIWmuhRt5Buj9AdYDnv6kG4RVGPnoG4WUdgVBcXVs9FKsqsi9Xz9UO-FDbk7WuROAbycrWq5gCuwOv4pl44XLGFWrSpxSTy0PZNAWcPuCO8xWdbkzAG7SQKlAHWO2Dl1M_ja5d5-RzHI2hsB5fRUxOdrM8-lWoq0URo7nGpFRvnnRedx4trNRV3tAqrlv33evTm5-BAval66KXN6UtAION1itOw25d11SpRI4B4fcpU7RktmWfE0KCzliR2u64IOqVTcdl8BM1Ks5XwTCQDIzhirWM_Y2pvj5o0mCcM15iBRGW9bF8b3gQZIdIoN00MlYL946GFp5n_YGiIcRR1MvRvKyy99VceRZi3r9EbATBFBEdqMtPqtc6xg3VzLPKg8g_BrFxjJEEe0aBseSz56wV0zCFBw6VvfMTHFlwkW6HYDkzZgMDW2U2R2VAmyM67wLJrgmvMdf1TJ550YL1EgZRj6tm7J1nX6HuhEvjrJn6etMjPBFryQLik5xvu56Dn21f55qZQEdFfKFXRT4EEVRSDEg7VnOpCk8BVIwVcCtCDeQTtF6p-LTFKyIGjJnq8Yd6nopz-hbTlTYlP0LxYYn0kZ0jZjRQArSDXO5Ek2gj4g1rWR4s1KxpFpvr4dmnOUZowg5TVmpBunmecXC0P2eXRHw88T_smi3uVDUExn2Stkxckp0hHaN733-nSjewKQ2Z2vP6DAAvwjeNoZzsQljYjqYsi28jmBN3w5LAFTQO7Ik2d9_evtXDsMh0po3DteNRLEXbKZQOKudr5D4SSQ75yxqnbzOquWMkY2H1r1hMpuhb5BnokPYNU7UlJmpcLRg8s0pz-t-X50e1-XHlv73wFMuXEYU-ZkZw6PBl8ce6_EbqNK7eoHiFNmjE60mg7ds_08p9H0keiH4PrelgRPL5DaOXr25Pad_-d3Tyqfra_hbpIkB14CweOQq3Dme1Vae6I3gBJheTt88L0WZ8eqZy8v9NL-xJIKg46FPuRXKQuqXjbm2-oDvCSWuucV8Cd6-Kl4GNZX7IbChIiIfMN1fM0khvXuk7MnHDhCSKOai_IT8b0zlRbLSYLKnSFvHXmxvhpFMMBibwPQawAWMjVh0mt_GHJw4tnu8SSmgLcjwlC3_QoSO1QMKM7fW0VNueFkTfOEKbBoCq3KW7ncWP5b3jZhaf9lIbHQqXOxjlVrCX8HP98oWLCjK73UYpo7Xpx-PEbDJW6MRRaWo9WREkOnL0kLZRlBwaOqHPORa3eJpcTkqmATq9s1OAAHQniQbTK9VMBu-U39S1FCsuuwq_xCeP4uM_H6gSQTaXpyFfwBnR7m3k-4WeHg4NNtrP2QdfzEmW1GM1Py4qesBRy8-awJJYcRO5qf_y9aO4hiQw5Q5tvnr0im6BWpt0TiSJmBf0yHeBUn3EoCxiPsEwYSITLdJllg7hZEdQ-mS1-9roL8aT7YAVBaBnhNjAEtbKcpFD5XcA-WHCjOR9FAI3rn6TjIykl_ToYF3KASZz7UVSygu6BgUmXt242_SqeqHafzfQBr0n4IcFINFYWetMtSL4jrreHwXd7_PbxhN-IwNnflvmtHABOqIPw9Fnug9GRo21jn3frioiDhWkFVG7nkZtO7qWSDoBqqjPTZjx_AHe6wfFazqyiYbSN082Gk2Fd4V3835AQTMXDdNUq97sPwDGizL5zKgmfxIylEfWp52GOyTcGSI3GM1SW5rWu892zPgvp9KwgV1vUPhhD5CnNipGsnKAagg3VeYUPEjKuHG-5kWOHWTP7rYzBSw4SKkQdxa1ch7jiGFWHkt2XsaZVuIfzHeP_nmPJj37-l6KG_oSsAr_htr1NbHdH6JbGMMBuHhoeM2ddnAa9kmdVkQoDwMBTFSpPYDp2Vu7W52mbT4Yy-jc5zDVgm-EPhtGq2erUgTJs0npq-Gpd-H4tpzN_YatVy7i95kCgU7ePCwn6J1jpNMzv2-6kkYKvXB0URxvdY9Qgl5dyi6vaujiM6CKFaDN7dQR3ayNBr2MtsccKKVrUjB_d8dlJGmp4UbU3BBFWmaut_L0C9Sp4y6AgibNSQCf9enLfYC0Swzisd0llLskjmTgvNpdCNYBNTvnSar5VdOLhdaDdOtaro3x5-GkGp92CKBsARVb73UVmUZjrViJc7r1WIxq-AwtWI5j81ch5u_uLBio5VmKprXBUAQy69JQO7DyYGUfJfIdKF0sGZ0HOtOy2GYwP7cWwGWJmds1DALZ4B27HCpXbd7_pWmCMhSc5hxPxi6K5froENkZT-eidX6yAoRWTXm-UhpBnw99PHGpy9sRrPYXoe0uii-mWOy2lm-no4xPuF8ThG2jwuotzD4KPVFOuop7pGKPJ9M0aVtDAznBWAAPvxOhik8siVVIY0bcydInia5LQwTkLjcCgafBRP8St75FkSsJyWi8I5sx0HBqSePCVe3rtJMUn8GuZY1cwFMWXqJmA_arzd13LaaeK9PD_5saTbRdurDWoHtq9Lk0ABtVndI7UZ8ETJRQs2-vNpY7b1e4ODEzXaHVxc4Jqsvq6CwG7JxT4OiA1IbtT3zg_tTUsny9mMl3a-V74IsLypZ3CE1x-C-CKJMPnuxxbYeFpzbEBceuWYeQb6Bu5sVoot40N76rwguosuH5xqgrjKVLnQKVB8c4f3T7T5G2o_WFKukcoQ7Ehgo7z8sj50p_wcxTN1rf3beHEz8NQ7GqmpV3kAWkVeunYwsypzgjLYt5rojIOzO9sYpCPe-1t3QCluAJEW5-jpBWh95zfn-n1NdmlVBObRJRHP1_P0lAq4RsY-UGYBqFzrPwrla5TyY6ivLSbH94LXIHzXV2I1znyacvVEoGbCjWagryMIdMDCsYdpq2iUSWXUFnx4rH4AtanI_M57cK5QLcTL_ZP2waY3KwCWqtTZowdoTVC9ZXvrM4xeAG8-hpQHqZ1x-qFBX_pbq2El1dZlKv19hYYPHJogcjknoIlrPRICkPSc7nodS71lCUKJuihiKCwotBU8OCZ52ccj_quXIa7V-0onyz5_BVlEHub8sUooqd0GWHb_O5u6xDU6abHBkew5Cfat-TFeBKyz0iOuFCVYU2cfauSokuUl-M2Z5DNFKJ_5E9clksuDo9GNNnkQIBdO40lOJN59Cf1tC_-UdTcbHKVAfohvwGP1dp8o3I3XG0QnS7_3nWdPZOOjldUH-woSATKb064V9UgQ4uYZGgRsIbtarI2HBcJ_slqSKlngd3N24dik3T-aybK2_u2eZCkE2DGwsmptyQwPId2C2ZtgnL75tKm14-vWw9Pr8_Unbe9bewDZC5hhsj_ysopd7j7tWnzjAFviRiiAa5oQn7pe8eR7hZMhK2xCONN7kRBmCO7xjYtuxGlVRyItxCbyUrDN42aKNJYU16IECp64-Pr7VPmagTh_TQyUxs087r8tERTj0rGRmJlg3HVb4bsKH_2ggEqCA858e3y4Qs6YlkHAxSBktJvVhJ7JmEvll5l6DUlfD8moRltLsnOulfEOhQPvKpx3i11oc_KPZ5-ZcKlA8sxAEO7a_9G9kOAl2R-1eRDFyill7Y_lUtyMO7s0nHPrLxcvOKPbHMO8klrnQCSKBi707ukp7aTQoPugmAd9zGwiHpeA7IqtFc-4SpZis1LOJGl2o7QOZ-3HCvf2xS_4--vm4i02OKOhGfO7SsvOLCEpuhw-cTZIwcAmz10QZ-TXfO1WrLLtqY_zvwaVIKRJDIIZ-Wqc7NEdv2BnOUzm5a0RLuan2-B0PGYoIDmNv0Ew0u9rBujPweq612-3APDsQSr_6q94SI1WuuCtOBshkhMc25QXUHFYMmelf5XED2uxoStZfiTJAyE3T0XMSivcsZt2MA8XhUK9oC3I4ERxbFEAWE-gxgnJucR6CqFKivTN3um9xEHWSvC5xyOqGqFjZqMOWlepgZecIaWpu95kD8pfe64v1ZSlAHKikVWUM5jBnj2tPNIxjZvMw2jU7jLSTzUCfnTu32ApFWdov0YmdtU-o1DxovVRmUx1mLdmXTm3HBAdl6t1IkKxQV3zKD5_PlaohfmvDOV5Mk3Qzzb6Al6lSFsE7VIPkxgGz-B2UZwyGjfYelUWnOq0xMUhW5FU41m6i9mF2zAIbnM7Kk9tu90GcKYkxYtbQ0KjlUXI1bptlfjZ5mKtDoXn_Bw-72q93YbbFrsc-1Z-0JQ6G7SJWUI92vOGrwxeumZaWMCdx8eQfpkncDQHgSoasiQWvF6KeJ55XgYmTDZGA48Xa3eJZobJ9-2GBOc-gZbDODtmGvjLAl6REFrAjGc8N5qUIY1xWDpN8EhiP1EPCWuBG1eYSxWWqi-ob3UcSqX86sjmZwbzebJmrhDoGgM-fgz5T9yyiAmAybh-RM2PHVREw3fsRBm6GxhtmCdbo9NfqI7AGvNWyzuF5OX6NesArfPaqSs37eQHHSw5C6GkjKgqkhHnVXL91c-8ilpBdI1IRo5IvAStt-BLdLbI_d0-r7OA6EbNfKVaHm6dlpwnOWiwcOBwNYeDRx49AdIRpDrkwhDhelnWheZVjQPEpsgDrcSG_diCKycBmKs13hJYTQ33tp1qi7TomjJL0ECJcTs2LYqw-Zb2klwMhBdLF3fgjfOZsFGE87zDA9CHKRVk04oib1r1aGJvTfc3Lp51mFPmEox4wY8oTsvwuDb7QDVHaNpSOVnO76k-AX0YF8UaduJr9kZWib60MWnoMhqRBtTr3_mSh9D4XssNVS4kECfw5N1dPUjGH8NCwPmRLfl1SIwyMaOLPb1h2Jm5W60n-AX4peMi1-J0YjaNplb6uLFpR4nV_Oyc70qoMUGaaF1lm9ZnPIEBaVwO_UAYF1ZUWQ0zKDsmNDVfZk2ks6RY-GltIlBhnys4bc9ioKo5ZO5pUL3I64ydXndIwzbZh24Q6BVsxJTcIc3mOxfqPLOstp-eSp2ZtlCF96DVgJRFfKXDEJHIm4E_xwaxHjx8XnXfUL_6MalwkzdK7t8SFxo_qgwbl7QBqyhGWF_wdpjdHbCjaWJVJhiwGyRBjlKGOXQKMk6kLGd7n7n29Ksk9Wvjpiu3fI_FPThk48x7scsZ6wlPtfMGToYRdbsIC5leKcovySbJ0IdGrLEdSErVc0T9fk_EtTQhJewlzUYIxa4Ar0SOxSBcBeNGyCPXN5KoXG0VdwMwD7s47rsFKkEfdFFO6hNJHDK9jZjNTI7DerdUCZ7w_9mPNRn91YZsZ6UEIVzPRovWqXtCOd7hYLDsnytLrcI0sqpmgFBJZkgVnkIReP4qteRpvvzPeyu2h4Jxj4AiegQMOkpGOOsoVD8GOp_jmJTQUEVcLTJe9Myjd5ekEnNl1Y5RSqUxn89V1bNvgD5thxC-TgyK9cOkOofn6i_iaVU8i-tUNVesWZJYamLJZ_syfkyS-W4c-aJb9-aruufgmzFoRlC8_01Rjt0dhlxcj3CtsVG38Qa5p-EqaNvpE7N9kftT7mqZMvp-9etIRSfW4yGk5ykA_yJHIaoyDhEnwzt4OtXOuM92tMEhYgByJdC4XTra07v402AxQZxzymszUieHu40rrdFMjDIuA_Uhz3sF6gtiu4edY6L1VF0Q03e2Eihk_KUM7XYJqNw6HRi5035gKZm-rw2BFPgunduCVttwf59dUqCaGZT9VGvyf3m7_uo04FL_WQi4YVQNWfjyZRZnf3gMRUjlJilQk-lapX7uILmJo6jjsVHPjg2lNRNo14kFrtNnm7l1LZN1aKDwwr-P4ut79PV0wQhH2NM7JlNy-_4QWsjeSVG7vkv1jN224FGtUscOYgpijUCuLqH5Pk0UAQloeepPE9FYadn1cA0tWSmaT6KGDoC9CER1ynahm0ww_B8lPfDNlbTRsWZ9QoHO_mBU4SYqcjZmJHUI9HSZ_t0t9t1QrrneJsMO6zuIZERax2uyvfTuOh_jzYB_1acyOsj1NP2no71cdQ0B_J3GRTQ_TwCA8XGOB2BidoABWmnwyvJygqnzveUqma8pMwOaCgknktABTNWjUwVlauXuXmLjVpXyspbG3-cfcJJZWCeNhKcMVda-zEMpf0DO1HTPxuGOuj-tEcFZHuI1d7lGjyiM5OMJAEklnPrIyL4QJcA5uL0Y6i4SyQvSuuBbG5yN0Te2c1mdUGUU5ilc1cFU6YYiDnjrFxBATXIqur-Rb4hLrkiTsaQ1TU_ONtM-Xqtf5wDtIxZujugOhWSBre0fa53Kv1mAeZYb1qsSKDsKsqaQXE-nCllb2mmsaN1aKC8Iy3H92xFz3TIvKOP9K38Rp0jKk8thU0POyexp_USHeUr4su2rmjmHhdOQ5JL0wmfT9XhhwiMchtXlVA_Lzx2_WqmEhghuLp3nFVajdT7Z4LWwJ7WlA8Dz0Gtr4G5cA13yhcRrgH7edeeacAmgWuhLrjyWrEHDdHuWajoWPRuOwR6mzp0_A1ho0iabXNdK9TJoFwEv6cnU_frwBX6XpF9IX73jnM3Qb-po2y0x3opZ_o6b7TrSIFffrfxfbS33aju-M3cNctR74M_TcCQ35Q1L0b-ktKwhSlWAvHIKyA9obRmDhtC8qzros9JXyMLZRaGbFewFIUQb-1QDrdbLXRufYEQHNmPypOVZGUCi_SjmivZz5re1-48IE8Dy1bEnjcgWe4MQFOrMaT4Q-yJn8PKT7QAOuwlU5W_6Z847TwWnA6ML5GSCKTuwkl6uhQ_wBYzRXfKVjgc9CCSu-6G1E3LlY_Uhirz7D-5h4zyu_pB940OQbriLJY_ff2chVgNcN8UTAX0B2483po2T75DMJJdb15TTO8EMxwwsNIe6vOeaEyafEuuLBE8wnWyqS2j3gqT7t_O5JTZiPWuWdIaaKWf8-EMnHVBXybuknc5IduxoEKuA_0_ZC1JOO-I3aXH530BBxCC2F-NnUbk7s3te3xt-MSFvHjOISNijPKGcmNahV8oDsj1Gc0j2FjJlt2lQsTnRK24t3otFvXzypqE-5wpvjLkb1fIo2z9FDLwm-6LO_4xAzuOZ1bAM7LSwrOVKpI0DvWn5rLCqewKEjmBw_ZohBgo2smYPSfYoAq9a9Bkv2RA-YPxvl9SB9O-zJZFyqBxKiTPB9IzIA92FK637m60L32OZZ3kSyCWFuDqM=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36c9620087d09c459f31b5a96dfd\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqkWx9PRHyuw4v9c1zR3iaR2B7GZSe8NQIssKLYgeGCq5yYqcWV0JVRxIF9cwH4yuhLtv5Aj4vpQXYthbDfdv7z-ABWKff5TBtn5TxPFu2ex7u-5WRM1b69YoSJ_mJXXBjraxb5pTN2x9dy6Kj8sZFJaq3Dr_TfsA5tlLya6CwZi7IdLkHGp-QD00QGwpU-RIbnFmQgOoesNG7-MjknkLvQMtbSe-Xf8bPPV3sufrebO7cMcHeecWQl9g5Z9bqhq8JDvEsoVW44vM26oq-Lrj2WBhwtta11ZNQZDm1F5d4v3Mv3cW3-pbOUK4e0ys-jMNWd8WikQW8VLWaxjYVnV5s6IBxxlvNdOtwliI18_dlJ6TJJbXOW75_GgMKCuX_PKE5injD3gkVC3rK92TbWAyspm2a6WR4qMMb7pfVHRw-SigWucIzmTvSXGFNcAmoeMUnKSptCeAM5E_hF39t4vMzzCodouaMmfkaF2WjuEXBXSPkZUOpiTTKHELTmd4S4U5aMO-RinZ1dbMAj2XfJZ0nrhAA37Hs-Q8AuBvb2DWa7RsAN9BfvfPv-4BUTNKpX9n-R_sBsJVZR1wh8o52wyEpzgcIkfnXI6Wk2OK4wpWamiNEH6Vjv1kCzN94EGsG5yCP5RPKQs5NjaGvWZlC9ckMeXZQY_IVi3ituAkbRx-95-i3sXG__nT6oaRtR8hqK6hqt_BRXWqKnqfaQIDOBzLq5NejlHUq1KSTpOXbLyugC4Qh5YZrRjT29no5NjWR2Ef2EfxxTavNkPf1GdsP-89SsY6FbClsa3sKMLr0BPsAcETHxMhK1BBxieuT77J90bKll6j-CEYlGv1UmgZqFpDeHB9RCmkesKKKdKFRKZi29g605me-1DuEFU8dKrKz9Uf4_r64SCGpfqNAXUZpylj-zfazk7LyLC7N9Mw2N52HmmWeq9RqN8L6JDKCwgi6qnRZODCdGdSSR-eynbwUEcEHw3pw01jdWMGmMAdpLSpzKLT7bB8vTrZ-S5PctM4UNsTpjkYfRdEiYqe38PwtUiDdeQUKgZq65dduP6tEmD-nzsARqdbw-vEAIBLv0kZ7s_kkb1u5DnhKzRan1lpF_p3G7PfxzOoI3MFIHXpRugMtT_wOjF5MTvOfC9QRDqpmpIeAYnkjD_tSUU95SwaOPOh2cM6euba7x3gEM1MlsjaW8gAmGuRkkxZrzwQh7YU7M-D2cQtFVknv4shQsWHRcPTGYZT4_IYc3ojpBczyLE1WZBMfKrm1efLsRIeTHNnEyQPgcJfuxfYoxRQsGz-ODQjJu-gEnQs_Cb7qKlM52zIvJZf_exSasKu3LwdmAOUN-yaI-CaVdHtyUBh2D5n96E1BV4TATihmXIwajb06Q57jEOMYU1fUcwO_HgJBvJhu6mbBzxgyEjoC2juJlyFaeePa3xSfYq7Y38DG36qFjyK1pebrNQ9dgV5gdCirw1KbkXtAXR26uURsdsw2KFjtV5Usk2eznHURwtZyBwWVPnORn1I9vZxZg5AGmzoI38_X1CvMqfLIE3FkcEeb_cAxGrVNxNGHdF-_r0ExN6foZiXJTsabxjU7dlHbyiXqU5Vwm8Pr3o2la-XWa3rNbqkCpl5RSPutZmIfWMGnfP0WVF3XV9u8y-JtooezLw_CbYSYXIdGhqpN1BMjGFXOeIMi1tkHBqC9eHza3yLdtDlBYeKC2FjkBkX60ODpi8WXqEhdKk81NfP2fqUAPXCi-rBc5fccIKgOVAOENEfCAgj0GQIYxxD5Ch232-W1KaqL-jOcWn6qE1wCfcqHsVbZrbPHB5UOoRGuwMKSxM_xK33LJXXP9D0UI6__Np7NkPyoDzjaxmlCN3rZj3bIHy9ZIzR1_3wQTjw9w8Zpzpam1CStuifPTWpJMW-0VhkM_u1SH2A9G2KevHPe5OhmipjRV-TMoeXkYYsaMw5tCrz7FE0Rmx-TddJuBXjknJu_aGuzs5u0DC25E6vXXcf7ItdulBwKHwZ54VdSm3szlzF2K1QJYNnmVgKGtLyL20PXpoN96Gq0GArOsbDh5gVTsE-BJ8hO4S-QmsrCQ0Db-X74XT5UHgBPE3znYXfJKQXrnb-X9vKZ2UqE_jgCcCFO7hVrhfRtFbcHgVB2FbwHnJkIdJuV0gBxidtP6vSMj7cB-Md4MfzsMR71qSpuC0zIKN7qikBwPX2bciwS12z68ACviJKyP-cT7vjzOkbP9A1GF_l67w3i2vJ9yhW_kAycrpinIS7VhknTZBMmv9s-euUAtleZECKd75ptnx8j8Z9Bk6l_C44Gbnqb64otdy5FvNVcmRkTQwxekCtPw9MrPt7iu0Wya9-wKHzHNdiQkGnQGwfh6bOaxQrpdmQz2QLwM23MNpSjlN5QN-37aX-rGXxn_ahzqGn6BFsHjWr6bQ8xiux3XK2-s92DU8nnT2LsWJNcc8P4bB4taIjw2aj2YX8QrktT2wuiZH3WKQAge2WLPB_ftJYRjc3aZiKbWMF2S2KCO_hxL7V4m_nSkcEJz2ZcDHDrPIO0JU8YSD_NMNqMAinTxsetWElxV1RDEZKMJQsFhKA9BvfEmAvxjJ2BvKL00658JoI0v4wl7sK4jqO3jBEEoWD6L6aPRPu9GU0JDfGlmTTbA9et4YjZvO7-iDY9SQoHVcDWEbmHrlOobGEHrKbMxJkQKe0HLjQ_1O9RN_ZiObm9DHlWe-fHCGFUFQPZp_zXDFm84xu46NI2f7naSvGsuq4xt11avZPkFWCHOuEshEwYwSJ-wKh4gd6k8kbs3WW7XWcu5Y6ljvj6-HFDS7s8TtFgZpivyjeO767rMMBN2EAJ8CNYjjdqph1XLR3lM7fEgTHAF8NnWuoyqzuFYy968163W6yVjlhNw4M7QTr30Uvywdb9I17AgVpL-OGPcFa3le9bSGdtqdR4fZ8GG6VTQ-iddrpteBqvkBFSXWo36_YB9VcePh2pwfujU4kPE99lN-QTNcPyi6Mu9p2gleciHtAd1S_JPZyhHy97Xl-vXC05cYgdyCdnVE-5tad3RetCNcbcBcUEEbqQwjVJ2HkATzLwlroFjJmneF4cfAqJd6iOpnS2yqAd_Qdwah_ypMBThP7i1j0DKvq-qYmy_nrAS7Y5SSaby7D1PUGJe0-COk7EQ0WPm4N77bc3sI0drv1gYB3pPiRRFPE8ViAayAnxNN9G8WbyGZGL5qLuzi2nMByY-ZvXvWyzNso1HcjOVQ40Tzh1cBdVGnI0-1TDeECWU5qrjLZ1TtevIOsQexaJn_B956RPech8o3DfDyx6ke27Kv-IWGlnmZSO0iCz7RkVR6y11YtMX7xsJ_uOyr9Y9lRXfAylGU_-vSgIzYnfUQUYI0l_WwMmfec1w6EnZlu4Z0P0pXKhMYHi6guB7f_R7FFFA_lkn1DzA4bgOexSpU0pat9x9GpJ0hkgoAtRukBlJ6fJlfQHoZ5LiYs0Vn0sqO_YS-fERE5otWTrtufWXWCyZ_LofdgZINXhJFFFIGDIG3iVTB9ABnQjyKe52ZoLN-akxwx0scttSflatDZLArNnbrJekJcHIiQJ353CvrnpOSekJU8VBqTUzs6VrHW5NH6rJUIMPQIbEkOSqzDDwgaSkG1f4-9yCLdJkPeGRvvSzMVlO9tEDaVU8KAIIwiQHNwIvf1qRWGLJmV7vfwwD6cS2h0FBXLCKp2m7LCx2GjIK6BaHsa4pIepxFihD2OlumzJOtHt2gdnRslSw8mBhGRrkyABRAAcb82LezLjwCv0R5ZwUCB86TbzSBVaNa255PXxnkWMW7MMVksEYz0EM_W0_Cu7W-N1eEhhI335QmM7xGz2JKhYds_l_hbpm49D8IpK3Ml-mE85zhybTdXQxGFlAf1hfQ5D_w574fkmsvTAfW2nKsFs9UfzPj2XLb2qo01vcpbBcXOIjaaCUwm3E5hZ1GZ-_0as3CXK9rY51NrKjJnVX2En-i64h7o4bbKaCeOmW5GMzlK-l-F9UY-UuZHrNjYhSvH8fikSPYNtNgz2W59J5SPhEaA6_CbeM1UzIZseMN_LhD0ey71FiFhcyoPdWUegqA8IKCfDAmvCSFLkBzpeHXKJ-53znpnGqoAvUb78CpqazHBzxxQMhsOR_YVKsLiTfE55Lu8DM-l53WBiX0EgID8vBNKeoN4sjFouvfzSR6IEDeSEkcbtYOAd6VGy5gJ_D9mBd-D1yd09RAOezDSj3Am2rGFFwS7P6LM-ndsNcTLxpOAiWqDp8YnE0dFvph8ZkDGrTeASWiQtQDn9KqPt5zIeWpCZiUIob5MQ_S9fiV7swC7fuu1yTUziIIDEYMuDXO2Vcmq2o-N2Yemkl6Qylmr85eScL3Mf79gAfgTt2wrsbyIbl6X9HSN-A0dRBBtZ-bE6cxfu9Z85wSDTTm4hZNDbTe-HQIpXeK8BXyC-lucGtK0GGB8qdxO_nJ4f6deuA3MEV0ZAbjXyEqmEZhGpYquTSJSMAqGolS6-pFpopTxqj_03ThHpVrSe9vEkNir5kkjvnuE489B-fxdPXqlU0-Fjyp9hb1ZnEw6aR7IBd_XvFvQCP1ozWA-MIEx528aq00tJxs2Bes8ogO9UfJ5qlzx4-XDtGhL2E4f8f81s9pUfhFb89npW8CVwyw9DHkx5_3YuqBh9DHkltDftqVHiP-arUc31xhP8_gC17oaM2Ae_jjmuYBtdy1EgEV5N0zSwgHp0t1frYf6POkbQjKApn86tgPDcqMyj0GKC6dEQ3R86RR0vfHOlunjkBfFw9abEVyY5ejXsk9rWzQMeBw-4a-5MuQDoo7W3uVzbaTAgIYbxMHM4REdRuF76pl8gPfCWum4KCsnOA4PbErIvotK0ZVgEqUipYDftzmWqDuS_NZ7fbk2O-t0BUM5DtU0brbP6dUrCv0WIsglGc6wfzPdoPmsgFuD-7lmM_yZtI2gy0_Nsqz4w0lDUulxEKfUQZ6fPOlfxslFEu_qCs5-tzlRc5oChCxlHMBMEHVQMUTLTtErh8nBA3-J_lN8kHJdgf5I-Ht-20twg9f_DbBG0zSHZZO-BjnT56TA8j2CQft8hJ6GfwrVRkviYI2INYVtT9JO_1zxoQT4o1R9jv4F-HmpjfbdE210K2UHi8t41rYYcKfszBDotr3DLc9I5zY1iDmMWFiIZsiGdIplAV5yYtTQ1CURlP4B5C8meRYjDc6IlJ2CZpGgNvW6QYnizAIfFQnIAVjug3iKTJ1Cr_kxtZHoPjn2Oa3Oo7rsO4RVA_4GsHkO-lZjI6rWgHLBiLQmfPVBFITs5dFxGPu6_xzHL7UESVXbmtw9__PO_zmo2DSs8j8F1hLDViAtXbWhtT1AkgyT7aPhN5z-a7O1FJTLQtEdUy1NVj1N3m55J-cq_d3gSfSHUoflW8pBiTaxNLyL5Kc6w72aXxYqvzeWtK9IoHGCRFNdljmsHRbHfgpHcznFCyFixfPfJq0PEmAwZtkgABir__dZgmmww4IQfaHNTl5axHKXPoO2dqlMy_50ELti_oy1XuLm2GFL3XgaZr9KdhL3bc1GJJSA-mtH4op1VHne0bkiORO_UxNyHHP-xr_XJno2-nJhdJUGQyEIUTno0qXs7p4C32f0JhDBc5nTRjHSLB0g5w1xagpqxsFfEmoJYpCYd2BDbFMtiiQU8xN05jVV-HEihgf2of1v4374dtu8umjIQB7YdP60A4it6e1P2PKy-kwCHNfeSRGWIu7A50PWbDnl5oxdsCY9oHrC5TQsiFIAj2teXjPUpuwvKQf6IPOJ6a8nkburnKdfUkgjQm40PCoVaIKlipk6TiutCxFEUFt78JGBKPKtzJdirgIdW_ty6i2JFHoaZnFD3DG1yGtNSIqi6Eqcnxn7NEj1Y3Igp0fMQlIJLhedeM7RWX6ph_EKH7z8f2vnVk53qack9R24ddUghbN1h-pDLlvufnl6_lC6oF5sQrP-r2iRkwNE8HEStN3K-Bd_PuFwuigaiDwqfxNajg2ozk38_UYacvu4t6Z8yCYcU2tOvnlDIguFN63x7eo37yHV8aTfEkfUHtQ_O7F5fj-O8_PRCh8xzrzIV8qIfe6nP9nNKD92Wkqp70wBSrhsfuTRTGL_ywJ39M5HPa9pT0vSIatCDb3e1JVr7vE7SP-pVyMQBpIi_g4zyAG8dvkiMPf3f35RwRZSO3hF2h7HqeB9562JDH9kRvb4gwnhvakSlNRphMah8hM9KKUJ-2lZf95IfXdCmyNBuHtzjfR8m17XEncb1amn7jAdr47p43B7HgAhsTM6IopC3_wa5LIHEYiwQSUcieUyn3g5UTAF_ioCKubWxJiagVQeBloUb7f7P_AxPgZdlgHMGU6O0zPoJdPUiFspjSqFPpuNeREu2JvPdCIP6NPXJnYh479VsZa4CIQ9I4p2JRBXkhQzjJIA8co6LyOj8Fl9ykM18PPT_VCpNobSbTr98MDehIMFNGX1IA7CVAja_G3NvLX9sRE3TmND50cHZIanhGcBfwwlLY-T_EqUnT2sbjZ0Pa7SEgB2cmioLLcSanZO4N7EFfUsuGruRpAUUc-wgVr-0f80-i9tQduPoiQ41JuGgMYYWam8dgaOl_kP9hfiZ0DRC-IFxTjIur_b0v6by7gzcQH1-XNgMGUff4_V8uXLCDIsENAJz5p3AUPJKWiq7NVBYaYq7a0-_U7HHOLfOlt5ygxoantHobSFwnLC0oGomXQEVEEesDlZwxvt1Uys6RtMmKHe_nXCYNlbPsU8ib6_ld9trGMcFJ_PryTY6xHrRLrsbF1lGnz3YUEGRux0EguWcfAHUpq3PQDjacDtizeHtnmhiOSDvuljAYlJpx1l9qrGn8yXV8K-E4ON7ZuzjRJhMt3iS3bQaAEnra-4PUajGnqPqvDzZL1cNiLyWXMgQmNk86Yc2yR01CnFAbOZe1qInye08W_DxAGJ7wcK7Hli8AWcsXlBPU2oR8bW9PT1Iovt2IeakNzcSDW_CNaO1UiY5nKDjZCn1h6l8sncS3OQuGJkGKjvSRWQ3-bcTSqHQmbMgzi3Tp2aTGk-0mIxmG-_CvVP84AEBnh63qcP11XdsRke8p_IvRyG-yUpAgDEITLr1ytY6_19kzeWnc5_iSJVyu5CaDOk-vyzM-5PBcA1d2xpVhxEBFkJ40VBtvZtu75VYQZLF9YTGQZR2081m86iMChZcumfMgY6eHjxinkeVeHctBTQR6ILaaS0PnFByc7nnyv9CfH4g94fMFkyoTy26DakDVSe8bKaWTt2mdXsqpfD3vR1juu0p4GM3tuz-pmfkKqHzQRh2q7yAfp1U6sxdnN8qfbTY_a8xf4apYlSC6N0rWGuYhn9RUtAZbqSxsQxN2uRSHziw8-Yg8vVCimslD478jB47_RQFvldJui5KIZP7UKdxinWi46uHCrQTxrGGdacWpvbAWh6udlfXVb04nBkhnRG4lpap2HeZ63n-V07hWIBHxI_ki_K8Ps0Ul_iZRtTXfR8NfY0_F4lQHXgH-qFzaiAoWtJV7xS2fvPJYvwkcbX5FSLa8ZOth0IN-MN6qB5Cr-wW6-HmwCJTqo3pcLrUieBM5c2fWAi-3LwPZhVEzB_8Rte4UZWJ9sdQb1DsWA_Wj5pWNsB_quKeWDbgO0yOhBtMv59RNRHbeezySo9o2vNuyp0m5GzR9tZNo02fXhlAsakkXCLLSuqTsNp65EpxExVlGlYyWx4Ii89Oo-Qm6Rjx6D5bh0yqnEsBXbfbqzSVaCcV4dAOQE0zDcPcdePqJV6Km2U_NeeyhcKKk23moz9LJyRLOuZN6yMRF6gSTXM-Pev_EW13G5vJQriTsDdfI1QjIzb_penF4b594iihhaIuVllecK2typ91xYV5DCFU5HW--Q3PYtWEiTpnYgtPaiNbF-eHrgZ4_MKBRX62SPFlqXapNs24oUXCKZspZgZeM7oOvpz-pGFzvtRXV-VerirGKFGwjV2YCxAsnU-7_zyqH0-qj8IyGRfg6YaYRH49gWjvk12f-gFc-sY_Q2y_2eKzsJ3X6fHkzSz9Zg5f0zOEebQRR09xIbLA5gLn6TEsOgU8NR_6mqL4WI3uB1WfVEwUotGtef8gG31cBfgahP2_peAmxx4gtPZDbDJ_g62vjOTvS66geT4ei7ZldZgcdZOGHJj7z8J06hIkUVV0laJpszk964SVOIC4iDhkP7qKLEJM0aNfSEk16Q_b42HL9HLJy6PNwdB8QMhw_wlKEWI3DrtR4lzj63bZgAyXirHfTKH7EpiruWcnqIdHpWbVhVwly2HdbGuMAAqLSCYczTpstt24_eu58-Z2XBZKq9nOQBazRbOMMzsX2RcY59gm3AmKqdR7BSj4BFOQH1_Ff6_pHFRY4nUB5KZXFn1rVbJSrg91if_7I81vhkmmJYvxRQjntceghV0s6M69unfzIYRkARoDCRQT10KXTg0cFgJM7F09VdeVXGOndKROI9JwOJ_PwYy5DxLIRBQLN89q7Jxw9C00W2TdYnkzRWcZvMIYfCcOXS6LFG2EAIdMDA==\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36ce354887d0aa9c5e2c2782ac7d\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqNoQn9jfHmDQ96fhHVwmOUf49U5GGnEUN9i-BUJAqRKuxZrNJ-MtoU34VSiGwODwhIoOB1HfC4lRyjarqcRhRnkUtHqnre3YAcWQoCZPlBJcgvWwouHlmZHSJuttgHBtWi6XvI6ksUhtbq2Zy_IFnv0yH3o9Ah9-XG_1MiOvXsMt3KKfxgfbL65fB-kLJboJtHAS4EUNDs3CA2nilXDeKwsYSsfFPFq9A_u5uZ2zWIqnM_b0Fzv6oFJcrPmpAbryr9cojrIY53Yv-HzdMqH9riwcdoAbpTP55ffCXFD8kmD3XhFj3ANNVPE6jC77ZFLHhyUx7GNfmLX2wl6J2ZBFIY-ls8iw9Pq0e6gUtzV_79Zb19lV-FMFf-Tfvy1pgCK6Vl-n6tcmBL8KP5uv54Z1DI2J311DOQVKnOgBkQCQdMo6hzQJ-gXENU32ZzXOI8jnxCKBJvbstmBYomYMvqa4KHUJyY9jyB0K6ZUAdWAQI_UohLGup_DPo6GlY0gamU0fQAXw7W6uaU_X5j1YPkrexZ05e8qlqYci_L-7munaIEuaJg3eSIDWGinOc4H3DT4a95rDxejHTDG4g6E6XrVxRH_CtTt2qe_q6N6Zh9CmINp-fSKQz9hyaJYG2vDUUhpmvsFoQaZlicksgzu65_VmbZF-kC5vJ5T_zWce3U_8L0Oe8_teAQu8K0Il6-defQuye2_ohFRjIwDg54CZyA4LkTCs8vibeO4Bm4IChUYxZxZoE2koJMF8P246oiXhbs3-6fJGq2KA6AkT33waLGUNhCjjwt7DCfni0EhShgrKeLHle_-oK7yx2_KEup78ljGWJUm0pdbki_IzbCf5eJ8ILKan0ZhyUyfaD4IsMskTJJM3ja_aNgBgq3hUGannjkl-1MPsR_M-w8CH_Ib8RgriVMmEmALkRnlrz35Mx9P0yRITrHYbjlcQVrdQZIoKYLOt79rztlPc90mi5f1xjwD0XdVT-WseOn_R76ZZD5xbJO7zAecAd0YNo2bUCqoQ91yr7Ls2lYKoxNyBCbm227EdX3mRUa4aOkot_8sHUohFYucZX0yRZn7Iu9lHmra2zw1bpUW4sqHE3xddmDMrZkoVGWnxCyrWhnM2buVtQGfMVK7fHyYZ4HGOEISdLtH4VyY2C7tPCkDRCV_WOMVZv-Q9jR0cT2gjlPMg-OCwFBv5nwz7uvBKSPK_ntFV9OtFaLKgVrG3v_SOZPHT6rW4FPEiR_RemHq-MVyMA8V5YVaYffHby3F81E5vjrrbUmKgoEoCWrgpOaa2_eriKsvhZJqdIJY-h3TAc7cErpFbmOLh_wgCTMRYpf-er9JxQb-a_D0r7sJbshKbFOgglaLCZ9g1iHQQQzJ5BukQjjWByRv8BPAnTmSa6QMZyk81px4gpCkAjvvSb1EjfIIRav8V5uvLskh0jcomHpSggUVWxCsTD0WGjoXbwr-Ul13-t582mbZXSKR7mzh_yVENGg90TYNqmvTbLaBKBM8xFJtXht5ZPDNpx5s544OKyQ9v6pbLPqlunUq93YsEqpoPcczRgg2_jJ9RDKCvqUp1k9Qy-O_So0XfMQYso1Kl0HuSSzgiB3uSJcAYAgQKZy3iOrMUwj7v94m0w2yTl7QYp_p8pxgFZykzmF3D9HiES7hxL5dnUwTKBivAN3hetz6YPVRcfMZH9T7BFU88kncp8SYEk2RvetGGsNhWbP2hO01gFJ-EvFguJoif-1EUwrDKs2ASPj_nw1UkBWRQ_XpL02NADrv_T88sk56rI1Wl8Ah_WWbDryGj-rCl3-TFljHfO8EsAAwqbQfIQXF72RY5jMVF5CZVTR9hFcH6NlhuqIoQDlXDLJMO5Z0pWOy7u6coXshODSCA5MZ4Cz7iHm5oBCsg2pZ3Cz2akFFTuhqlndvXGk55A3xc0A2K2K9CLV2G8UvaBfCVsbMJ1wvJnJgZmmuQC1ZXb2k8hVQ3Lu1PM2zCZxdFsBn7E4XDT9xMnjtfppnXcgr5xVirLxzcvqB7ex2Mc4GtvMhQhEKDSN37agnRsxHbZoCXaRDjk8zMN3WjxhD8PKQWSB-o5GpUrGsEMjNrdJql08B2VRNOVxg0KkUF6FpH29mgu4hWYnqD5M0paZn2i5ltVJNEib4V2uALBhYvvLec2kmGMzq-98K2iwHYbo75dil5_sKaDPmAI1LWySlZSCCCXHjSS35M_WyGV5WQexgATMzsBDQWOOrXbg_ULZ5ctouuGh1_RXQpGc38sm_ciPZVcAp_8nuCIWVs3kUYVXx6wjkBRwo2frOZh2UmupPN-s-kl2B_M_v--4LnSEZNvhYj54Qlq3eYq5V5zGMboRMIhbFAl_9YY9o20TgOBH6oekH_Kj1Hquw6NoGG_fXsuoAnXquSiDNuVy7Idrn1jyjkKIno7pWzMwDnNfenPHWZxbvVjQHpXM1MtifDQRPKb0noHDz7tcrQzJhH6zD9v86EjFmkKXlbsUmSK44BK_0RqqCnwjiJeWKAWvfqCcL80fPD2VPNA2EVQ6urH32CL-xhOcUw1UwOTv9b_kj5l5MB07FNU3gXGETMFuu4buaCZ75rjAdpkDDpfadX38p-u00Pw2YZ86aD-Ce7ZkmpC4vL34AHuD-soYgiloBxzf8CY0jAE0xzUYmOFApsJxiBZAP-y66F131qovRsOW4xxtLVPj6r2mS52pR5-ZJCNME_pLAWWvo6nivSxFPnT8KldHVQ8EiwNxhGWvvn2JX2hE4R-Lmy4sUryG3g9hOTDb2bJAbqD8uuGqjSUcxi4MEeGqJaf028YZ2OUaYfAHPds1AO6wWzbCKlO0hswiXaK0Wh897U1LfE3pc-aOzrdj-0FWNFxOHj__A49QBJtNmccHW-Q1UFRPTfhcVwWZMGZVTQF3jp1DEIJI31-YsXfuiOzcBRkcO5VWouNZn2U-Dp65eIJ-4y5uIWRhzXQAo_qsqvYKwXeJezNGEj0hE5pDI_Oh8egzM46ip3zQ_f5YeseQjd0DEVJbgWPWXzQuFZn1hcyAe0lwXa5Epf4P-hHqIa43vppMqBbcX-WXyJpf3o5ZWv4ISi8mv8PzyNMYdrvmN-I1uBsEEZM7rcshUYGxWx-VuDO_tGDE7sba9xji9PMc92jluoKr7KPspbroK5n_2_x73Mb08XAXHG34jt4p2Worw75OtCii5QvEY5YpqrObXivONwdjkTM8Q41836XRHalqZxav1VTVy9P4vq5Nf2lMtbkz0cY9DT-51AcKkLE8Xf6ZugAzCUVCa2016a5rEA_YKvxlUmLxRQG2EAJW_1FABAcUOkVot68Q09boS-aPrYu5t4dlqLaIMSwRwdqsm7WFx90ZgG6mcGVxYp5NvxWDlDzC_b3av6FpuWQzpuOXJS6at8scamyBD36qLJioOYk4BhPyHAJBwFntPW-jm2XEyoOEDYcdJZCfAYdKCDHzZULH0ZHbuk54DT4BtOBMsJfD0sY0MWrC7ZedbgFrv-LeN3LkDUtooHG15kRlYWtkf9PtsRmAw624O1ijMGxSsHXmeHEMKUL9gIDc9BoUmXsqgkMJqjN74kZYKaao3L0I4_9e8RqoDirGTOcy2QDx5uQ8YhuZZPmcPDY7xxS4NsCh2GGxRC7I0REPMLh6KJioJuQuwbSebStv1ifJqk-AFnqq--5oOHgl0u9lFDZzFI2i5Ed4EtnlVbXVqa5jBiWS7MEad4FmoxcFH0kmWP9a2tkeVEStCdwp8VE4fw3PtTmBK7Gm5QB6sTn12albbnvY2GvFBTcNj8XdfAmdlEoFErvj_AQRSbKU8g1BPqpG8cH3MjwWrTivFHO96aJpN85rurAG5TRX8We-4ZSumYvkaqASpXtXDdTZG-_rkZt-7cXuLqOBZTfKC-A15lA5e_57lYBeSzdVUdBgGnQoY77ECcvn4poLHQXDHcGKXRW-EjfvukqjNoX_WOb3H1X-WYyZxRtIo0KmQTNBx8zchGvRUjGzVZL9gUS9fQTockvrevk-CWEGl9LRHtUFCGmQuHaQ1OHTN4EeLhgG6um3azYLtQwyO_PRfQS42xRBVx-6dIQtefyLlcFjhSdGFqRb65otzy26XNjxYEsgCgSFHX0AeyAgd5sz6gtJQ0Aajp8FDc722HfOYk3K_etqYKqheVoQkFFYoKdLoKtdf7fFvRknrG4LtghKFPWbHq-qynkFZfKOGFi-k2ikPm86tIZ705BMEcPCGt9zkUUwkVHIUNgODsHJUmToJ3i4SZTBFX9rbSLRJwaImXN6CHtmjyywKR6UMqAlE2feZD5BzJ68oj_iD5QrwwJ5hAwYEN9tCF5DMs2zjDEOujlPNa2IEiUSk_RBWP0nlAFCemEuZLFy7U8MyUwoPIh1ANH1N_ltkiD_4AZv7hHAr8jVblfkjCJ8DOYbCH9t7VwlnVRv7YG75na21AUkDLHKmugB1Rt72jUwolxPfJLYFVC_rZTZfKXZy8pRlLfJ5fsx0Hmt4OBdf19IgdHBEfIMtBziXFB0_CXOX6hghnicAjtLewClm05h24wf7c6kDz-Jk8vyJu4QNyHjdZkU9d8c_4FMA7zBpT9gHCrrH2zOjeFMH1XJhCbFsnDchtPUTyeavJgQLobnZDNq9Kx34Qulrwvd-8Eoa0GYtR9wtjFbhJu8SNRYlpYnma29FHVaA6jhIb3ZoCpMyQq-dHd3CWRIWMV8PIvapn_hke6tBiPL_CpKhhTkBXMDhxHSS0VWg1ZKJSFSvFMGMZWgPNXi_KasZS5sfxBpTbrCbZOBvAa8pqP8xNyqWSI1FO8zc6wCztxGAMLOLcBnMsp9JET8Hx98RNKf-Z64X40T4I_p1c-eMDJmF4YC-Nmk91yO4_lVjNfnYlZpuH2kYDLtgQYbnFP5-gx4uWPiEFMb713O4TB8E5wOLoV4OmKTRmtronHdM1FSTbqDFx4Y4awR71TodBLdALDX4MU8teJQE3jPhDlmYyASTcYeUtNgNdJMtukDRGQW2ELJXhqdePtVg6VJEfkqk9InJI68oCJFzA-eW4tEHOo2ca7GIO-tBG1lZLOBmct2qNoTI9l-FuLHSp33ucBSeEH6xxCvfZqFlk3cQt2Pr2x5qz38Gs45yositWtlqH3Vil2OJPeAeBzlxlfoYGgsO3LvT1GqOREdeoNQ7HNOWWmLlUSGrP5Ztt9okkenmS08cfoWoAq43yVlFRB_qLuXbpL1N0nQFobgHxW6pLbnjs6J-wscVVOo4cIiAn5plLItLlyz2xS6BniEFqVyabJtNRk0E7dmFAmJQCfc6TGUZoFuKFmk4OP-GcQpY8SyuYOia286B-kv44Z5zfrWgwEpabLRyIoONHtrVYC_RjjQ-4fTbfgK4OqeIwSSKgKU3pFXcLc-CcyshAe1ixkYb3X0rJPz3_vqaKyr_7n0-SD3DSQKqDl_bMtz7TZ1zWG04FcuIb6kTEst0ia6SLCnIym9vqxujmy_gKsHAUwhfgTHY4KgSK8hk4bUALcXp8I4u9HRmj0iddAFtq15cQi0BFuKQUGkYq578eew3HYP6dqvyhcYyeyGLZuzDeeO8ej_6Za3telLokRDeXLoS802PXTt1JZeDA7X5nVo0PUMwTtBzkrnm_ToNl-63Z9ceUmMbHzAg094KDV9oKjl8xg5ffn9-JKcotmFG5dl5bjvgdkxNheBxKYUqvVjelCMzs8DT3qpXnzlADiHwDa5mrgokLJSMEOtAgX0H7MLqiLeu8Q4puaJ__EP6mZxpnt4sTnkjZZLjRlPIulQfAWkb99IN-ZKlV6w6Wvzq68SI0-0rHL95fUccUhNmdEgeMtV7gE2enMGq7ofgnM5RlLvpBW8Q8eow35KPOWGq4tuJFi7DLip3JuhsXLU_bmsYieYb58lTcEZ9hUBarGct37ZShZR4GGUOeZ66rJBOI98QuFCsJ3_S4EzTMGKO56uIgiHQJb2hptGk1tljlz3aeOqbjpjEixI37QW_CTMTQ6N3HKkQCB4vtqBVS9ALCZDpeCEtp8YqB8DWQcRKSdGEZcipPcgGMJQaNlDVm1NAokKw9uzMcLv2mOZUIlL6kJsLesYH5gm6mw-Chkd9PTrFE4JyuAqArMHWys8PAWweOmjQw_YyxdNB6Dra5GmTg64s0yW3btkJ7quSkvkuuXUyanp84S2wtIONbhdPnM9z-H8c0n08Zcis6PMgwcx4X1W0zrXh54pasHYDNYF76TbKX9FWC2Nh-qpJjR3LNHtpy5B14d3638Neh-FN9t1eXDXLwfezX6Y45JDXNNFW80VrNh8Kd9592Had68WsvROLhnCT6FvrSv0aYm_7tQhZ0YI3LnPIPsqXC0ClNXwGKwfJ1HV5TQaTjwy9bkfQf1-cZHiGwSphU8JoWpP2unONei_4o1nNA2vzbi4C7CYLMzmVlvkGHX0nqdtXehFpdEBKGYzQ4w7_XkXbCd4KVYj0YBIdycM53RNWDX2Ngy73QsD0wMU6UQPxaI17g0r0Y8y373aOLnp8l-hNaZB9irBPNQxI66E9Ah5sDRhehcUrvNVw2_JSQWLyiSKCLCxyAFTL4_m463DhenDobOegN6VJ00lJrSOnhut4u8eWNdCOV3HaYMpUev8xTWSqFyzYwKm0jFn-GVHnDSQdVe5QpZ5FSC6UYKEKbFfvbtmrvLMkuC4ImDrjOowKFHsxK_BKJ05KW6rxnbOyuMz5ZvIaebiPhRhbuHLOd73NjEG2ThFRFA8981JO6tY_oG7s1SyStKMTUlDkrrEpXd2KNC-mS784-THyu_MyPcCaL7vSg61UsVflJLs81O4hq3zA0Vn5LhVXcOKUXIeAFN2JTpzulf2ZMyet18SebqJL_zRdg-M0L1U8QAFg_3sk69TFlO_LEqXVgFw8TjJoyvjVnS-r1QRG-xCarLwZXXAriqJSuphLB8YCe4c4wvgAByEXCdKitOPu9fyuXm2yZdfbXtvb5Uj9slrraWthctH414Vstd22mqJdwIi3RcK-kpSHH-dTl9sE3JuSGt4FUHbSZ0spy3sv6lnUAgeagzLdKUo5l25E5lUOZxZSc0RKjUE8MS3HkAxA-6bc5gmRsrAcuocAwRSQojbImzwySeSfuMJYjFvpg1yUBQxOVBfx_ctlya4oC1zmexOmIalcvIJFWVr1mtVtJEQsmsGwvxwiVkh1d-mttiJrTx74g7XQ5RQ7aJ1fGUqaqk6l07xby_8oPdTiUNEWCv2Jh5sV2DWCnX25wD-o3BuB3D6u2LlMcpnCYfhhA6P_31P089CprLGQsRD8c61__pdXJoW9WmHI4Q26MXv-RoyMEdT0U-Dlr4ks3WsyWMtKDO0GRi4VclHqdMbZUQOM8wo8EEXMSfIZdXTlcbtGCZW6B1uIznzQl5YBF2s2NXDbAeoMMfXaCRzahUrC_QV5leMDYs4_F-sLaQHycXv1SA5O1DIRWw5qYLy4gxQ35mrYPv5ldOUZeNPeY8OsZ7GNA0cv1ozczJOqcadN9-k_FOvZp15Nsn5WqBE_1Tir4FTHBHdiaXdklbXA8K5aPEojHin5PNlZS4fnzF-YE3MGkNIJp-3mDiqc2jPT5oPoWtfL5lnY6ocaD18ierwZyYhPcu8NT-a4fFJwP3jV0dG39rXXZ99gfCyPvPgaXTIrjZj3EQe0NFDIfqPLo-j6qo8umkOnz28-bkwGXjPCV0xmq59gy6HJmyvAdlkaiUkWl7RBUifdDEfOGbRX73l7jAEcpejCOOPQ3iVkIE77b2Jw3nSdtrOFFDr1qHp9eugT6XXW6aCNJF8bvx0QanhyBMII4gAifAWqHCKg5kwioER_IwwrWeEKY8UkKJ9ICIl4gPSwrBUJuQrXVXeUx3C9OInBM2SzvASMpeC0p2uIinjQNEo2Am4d1lPI7lXOHAycONSskXpcwx-aarPb0=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36d3256087d08349f54f57904189\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqJryJgcF9m6gAsHCCw64feN7ZWk3TMP9xEpuoeq0V4bt8TNXy8AZQmuAElcDM4ego71bzp-lxSoSbTMwlJlQnoLBsD1WhAlEZJQlGoJNPAlRhvmaHi2oYbY4SPCsWXpJhrTpMb6mTXC5TP16HdMts7HqPUxm0XYSFrfqHxLGuu6lvJg3M6odL-ytLYLDfFcTnH6MVVWxSCw6zLdhfKMzakg2degEv6GGPqLJrCAEB-qzePVS_vqC6MM4ujL5w5VxlADJHtpH9eq1cahmclsMaLX6o6fX1i9eNYibw45TDHI8xUGQAHI1RlcslXh5b9vFRqzCL2kQgW-LKJ8Fm-1ot-dNjDaQlBEBm_CK8z73hC1spAeAa2oLCogXBTv8IsHfKtqd8H7ECpklrA2F1D4P1aUQvKM4PG-VxscvMFHW8N-DnuIIWGGn97WB5yAKx_U0XpZ4FDel7_73FliEtRtBLgfQgsbGSR0bjPEgHvLRSh0y4OPPWmvzwmgLcw7iRNgOpTZpT587QSzOuRE1mwF-hjxw41zxfq_AL8z34FR0PDCDadPdr52LaPsUoVipAOVb_NY1ZfWEdynnPyV9EbsqrdGKgSnhv_cDepzMBhaU77ixu_R6vXyvYWZ68Va_k030OYi8Pnxn1xBdRm2VrJ5y-opofKmOoJwSwuzJ5bm8qXU4Gw7oqk3C2a7s9f73vuubP-kJPkkq4xmzfK3wwFJXueYZCebcVtiMB42RD7a0XcHYHwIwK8UktKDTBNx_lwe5ll6kUoCK4YOVEODu2sWzmCvo9SuouVyxriWxH9fv839LXdrJ_rKrVG9rpwpBUftiuutn2OXH6ptKpqvFu3iIWsS-ctoeH54m9qsZrVWR-vOlM6j43kkzKZjhKa9B3GS64yvF5ov2s25FfKdhHKKkaPNmJQX__QhYs5hT82iU62XURzD0QLc2cKE7GF4Sm7yMdeTgrxCPZIM97zwPCJd-4GisE_6IhxHarYPYyRQdTJ8TKAxdcBuZZSprrwXwR8quLEO01BDKafxLiq0i_7kQFK4OypWZEs4p9WxUUZ7w6E12cKQUGpgBwLNuduRNHuVGPquaJNc-HDAP81EuLbd3k71iP0bbafRgz9QTxZQsdnhMNJ7zIoKIMDtp6Uf56zi-VlvuwxWOshkcUczzU23g0wzezsey_bfJAWQpgdtXGNVCo8yI-c_FJ1MJOf8MIXopy_CQGFDSG_2RAA4e1gwoh-NLotNf7GBXb1TuSd7nTyh7o7DlgbJWIlbGS-VQOfjY76BjmCLhKX6DWlNE1adfkbn4bkbU4aQcePEmqy85VzW-evL4GPxDCYiOBQUNj_iZleGVBjXaj9pMmnxkNIzjqw1cL4Pqa_-5LPUBdfU8B693ntI2nVE0eISF3Yq_GwLpGGEE3jwYRd5lB-4J3Qe7f0-zlktDJaz1lRmDJRNFCNmn2-AbmnL8mfi2x1OaGAKo-M5Z3_yusonTQs3XwH8ZBAmQAMb1WC-RSZHH-32XgJ0JP0TjbaVB1QP1pmxj4M3VxPZ1bZ7Kjz9nQOBx7lqkY2Zaw7S_sxiyWLMr-VIKzD9LLkh3Yfphm_HrXJxn-l713D-I0SSCnWfoq6tQvY2f_BezXDmB45qpSsztN2nqbwTayimN1fRTfNRiejW98SJNfZpFXMW9YZB4Dux_b8SWfhqpJvFEb5WDhjNVKW9ZgLgIQaJybX6CCTlQi6wpOSQNumvN4oOdyOIP3pHDNmHAO82NpuetFy4mkBG3pW1WfxhOzsnFWUZM-xgBDK55tS2VEeKHwMx-nEjqZbe8U7IgJCCv2r6nOep-CocBV8BU-tko3UiM86nuj3hYwx3Pcsk6o0GNUhnrnLZgycA2KPNVbJnH6UYSUhk5UysUSf_dx5xYeoQg3LybJdl_HLe6nh-iv26k_gg5p35binQDi6dKc-G9F2sFbdmnbXA2IfJXzKrWK9D4nEzNNvKJIkfvQh3p9R9TE5RmkxPHY3itWT-YOmGd5qcpSMf4-fRU6YcaRKj2HoTHNkgKJ_TF2KmWAUVGXSbOIfZD6eQAI3QnJULasmg5yoRo2w_Ol__J4aEIl9ngqYA48-xP5aso4HF_4IeMNOYeG0o4Y1BOmw8RNmSzfPDp_oMLEhMAhBx4Mwd6VUmChrboVM2REO8SICGjn1PwMGUvtRIums34MH5QF3B0PIwcM4hkcVLRnNNqknL8lE6b148PqgsNmkMDi_lFDMGHop-KqQTQdBt-HT82_VNNCSjpjEkcXYUNdI4SQjpNBxd7LQrSv2YHfHAt1G7RoSGdG9kIeBycKY-sblPmYwow9Q-CfiDoWjhgeUAwm_B8BfIBxGrt8P61lnkpgtiN-oOy7GaNxxqLB1RlOeKFoBXWwFIbXzkccvEyT5E3EQekoTUX5wK1osx9bhuBlw00ZqXw2hdKjP-X9Uowf8Q5pys2-2ecCrUTyk_vwjH8KhrAVS1dijOGHEstuj1yeS8HdZg-7oHlTboqCDZRuvx9KB33oW8hDTtGhK_UC9YBL0hRFu7DA5Yy0PbfW-huwOsUgC4SIGH8nPp9bJ3126pdVWO1zO_bwL3nV1v9E0iYjBXyLe6-Rp_c3HS9xwWJ2rB3Uj88dUrXO5JXaULz2af7bnwvZqpj4CYMw-jIfCoN85k3vVPmekOPTMVShWZ76tIJKAax-UjH2LCjWi2qY5J5pArRuJP8y8gA4U7Ke76gOYl6_YXIk5e-X5w0nZDHLKgl31uKqPfF1qGOlRNFZKJF40o8yBhtRl8SQ1dLamItHW3d4LCIehvpg4n_7bgj8sJ3mVNL7k0ydfMMEccIthflUVYsDYsAtgm9fVWC5jSku0x4EJ5Fau4WmYNHGJKOGKIyHiKI1gFrZMKPn7m1LtK1VZ2RKEsFhPy0hmXSzEw-DYRfbEljkBYghf6k8O_UReE3zOQl-IGkzSC_aEY9BCQftHZQNcv-01dd20EGNS5ASAC2bfrI369pIsaqSX55urEntVsFLfbKIgZc9Vk4ydtzPj1T5DDhPKHCIPrvNqEq7Gjy8A1YUvZoTsYHpMeymIYlWqxJ-xnBW0tLJohZmLgjNT01EntJLtl2O5buoVKtj3MDSE64i_3L3GT8qKWKvEogzqB9lFyfjvxul7FpdfRuShHyrZufUk02-1WfZsfd3g6X4vJg3oQ8jduH2zi0rkFAp7zUH8nzvhA4hjuML-Umt4f5uolsKOjYnd8vZvQ_TEGwPv65nK-cSU1EXrKSKZtoTkiWD4dKbsITEF1wR5rdv6c9_Z_rbLmf6-BEzB1okTBV_Z5roJSaT5ogqm4r5oJbj3v-N0QFjI7INHJUfBEhHzPJJTwqJOEzLmU7TV4CrQX5-ozNbjD4pp1vcpOZas2J7edI-NNgV_Q4WWwfKNRZG87a-EQJ6m6FyUWPD3oCj6CoR7050cinMSowQuLT3-yLvJO8FBFEH8WLEnIEN02I1chXLmQBYI-QMOxsM6pCvV1PotfMm-eKN0AxVNFKTvd_klPCeA35ROgrFc_URzJpqwQPxaAOkVma6kGpiL2ZMcfmdx9IlYOLESoERwuPVElG2Ogt9btqaabO1jDrnA4TQndheazP9Cycxee2M3irzBA9u9JxT-WbRx7-UqERGwx0P7ZTSFPsltuzQo4-yeuPxIZik6C4EwUYHU0wLnRbsyA1ra2EysD2p1zQ680A53qBzwvBtLJ20VI_o3fxFRPrmZk0JosfJdwuEmSSt9b2hzgXLKRbHz1W71PAnQ-yM6mTBXE-EKj4f3LB5GV58L6LUSWPS2pHKN-LNoj5Yz50cZZ1qQpmOqbUmABcyEVUmBV8C5qBclZ6ItCk_RWGGJ8G6bFXbZ6N_qNtVz11zI2JNMC2UWhEKr4EM78muMEEQdCZB2nQ6td78xpRDWozgqzpKmhcKOCDH6lcv9RSUjM2dSaKNdVT1YjeRfuu5OZLLHlvkpS-hi8Mkn4Zj2T92K-fkfJYZI6I1Lr3XE_KRj2YoWMXVne_E_jCfrcjJyubPV_qa7RMFJdhFUGB8uOmijfQoqXWyZbg5dF9pl599-BhCVvYwpx8pfqeJt3Nx6k3iA-HsF8s7g1dSTP956KJWhVyTeDefz_6HJDUMCNtpTVjc6DxF_xJkHe909c3ZukPx7xHS47wJvCdHIbYVzoxY-FwQ2gwQ37cQimy1xUAnLVSAoU4KhBs8GWHxFoQdk1xv6tsn6iJZ_OExj9rQb1-fDj99fUXEeoakJODMRf5TFSSjAcVQjuPEKaJvAQ5hc360Hydmc1RNbjxdQxTSzd0km18MDicXiJhYDkVcCkjPloNGQvwSU1ywkYPSfNS9VOb9N-KSQHGKS_sH-IVZylBmqzgg1t67Rlze3y8Fu8j7r0wW9_fnr3DHrwXeXSslOhpTBT06Y8C0Uawtlfa5LWZ1-qcRnQRFg1ii5Qf-6ReLpqW9n07fLOKcAVUiM_PiPWjwy7jBFUx7DPpwX_H1qY2e4SPTFfvmPtr_629HLUBRLmRa7_s4EPpvCt3Bixt1P-b_K4hNGT0VD6yTHLV8GsHIkVuavco_TPoeBbDiQd8Ztm1R2F6bzhtjT22OZUe25NkGIwaEdKXhAf9lNcxLp1HJeocrlR0E6ZxTKrD_iki01_Gami5BXHh6H9AtsUrhjvMA_EDygB30iqXYl1i49LYqH8ZMOPMKu6qT6a9C2l-Kpna1uaT4ELxO2gFtJTi21hH0d8A4lMa4kBGVIBAJt7sW6B4KuTBfYqENVaJycswXqJFjKBJ4mzx1pkMWRgNu6j03CtJv0C4kpR_TlScOh2vxCcwBZy6YSr4Vlnv8eywxs-2afaRzqbUeoJlk-3eRcaWGcXVFTOw0_LMWywbNiQdbo7qbU7h8crg-6Sd_ZH6K9LhNC15AnFFbFjhAWkmTZkZ_bLC5eFeuFRxUfavIWJj00PfNFGtb2D0dzMvf1AhkA0pZRb36JJ0AnmiQaLV02iQ82w8bppbVT99c2lG5FSv_mg23V7kwJ361yi7IRLxFTbgdVCKj4FibLDBfTdx8wJS3TsAALioPEQkPh8JXyQ-dbnvvCMKHKf6UUCBt_qNuYhuT692O0W4pfQs2h0mnbmNkvhUMMJgCskhFpre1D1ezkFqwrti5NdeTG-5Jbj2d-PiVVvyCiS4dSsX-4nl6sEw5-pJ9hXEU2OfokBVMdKSiCwVrPNjiBlWE3Azd64J08dTHuGQfSjwVsp_yj5AicAIa8odAlSDeHOzEj_VSAnHH3JIP7MbTVV-ZL011xb16JUXFMBWuM8zwR5Rp4HJTNVhMUDY2t_PI7pCqH62WJGJtRVYs1azzDAM7TkPHq9vGRxE9_szDxq_q-5dUVmzAsdfVxspHFGF_yWgwx4z8sCYoVKc2TTGe3ke7IvzC4tlMzHBy8CeLDutJIBQs0h64ADBSQa7WpFdVrFXe7XiKnq6XXZWFcKfV60jnH4N8sowOW04FeJYfgG-APpwYMVsWk2SdFVnc6V6k3jCe4Hy5_GdomvLgPpgOrg7FP9eNuSZ0MkoVctyvgWgqGPXFOCytcpSl_fzeEk0lweQHzQehynks7vUuQnmLqz_A6Y_ML_VLqBOe7s7rvdNM1cTuxu6WLfDrMb7NxjPq2hvn8atjwovBbYKWAg4PslomyaPUznB-RL3cJDgpSZooUu7Pf7EBTyNFhiOKq3B1koOR8dVt8g7dLFjI7DBAgfL8CrMDqO1GaLzaXaoIbaFmSvJ-tpFv1RiBVm0yryLn3tuYmBz7UiWqSv5rFhNZd_ECoymc05g3Id8l-XCcAjjjI7pjF7S71Vbnbn1X2oC3cJC7daPJfRJwlYzxS9h8Jrzn6FFhqAywgQUow609QIb5svpfp56jm6Q3X4t9jMInRg1uqnGva307Qy1RB2pglvEeoHKz_g9lhuvedP0O6zTW_jprKgg3WvWriqkzvTSxtxB2770InYDRMQNEOmxboKfqc06thRBRLI4ov_5duWdBKXuc_PTkORPKTHwvQiXZp9Q6cdQIDdzpgaK5v4Ftr1gzhsyP2j8t8wMgI_9twsfVBy97yXBDTCqymg-pI3RmUQQwYSO37zI4CmjGHZ2rUcxIJ94UQ0By9pPFF9nlumzwZFsff5nSJLFeZ_TOvc9GTKeYdFXhrZXtGKgCtqTgPdA1AeWxWOQcbdZDtSkkuOym21vWAP_7z3sgF96TfHriatme0s4G70ZpRAE_23sNQ2sJhpot8FdhpNar_1PZXaJPl5OPrhE908l6a2KkrVyL5fjrWzi-9XJiZE_-XauFEbpQFPPXZ9DT0Etc-4skwqcS9Oq_w9URZ9uoUpPWU8-zSJFAUZj7H60VSYWQHTltwfWKQK8wwAHiBDA3lYD_boPBx3JmC2xtOa6YY0Zlbb9XrQ87AxsN4YvGoYACf-vDAfG2fhKQdjkESCyw1LIplKxcb_dsdwe13uF1bISAhOF_hlNqcuZuTohFMwYuGcgTKEWk3Siu4TP2Vu3RWMjmAS5hY4VFLl3SrMfdHmm1gQ4KN8SIk2W78NEBG4wuV_3ULIFFRqjVDOp3ARe1W4QIInFywdJoZdEoc_vBRcOxx1U-GUPtK4qGM-Lvr4Azz6JW_DMH9op61K5fB_W7HJpn6m3DVk4lMXhbnbRv4PB6BsWIzceJ4gZDgZukWgGzyjNzQJ5u0hWY65E7iVYSlldNZM9aZHHQkxaTs-2iLnU_zb-3x5iS8hWnRT4nrNmsb8Xge9HNp1lweZBNyoQUqULs1gPmd5hvwPkEUPjsVtUEK3Gu79xeKwgfDPc2UVOy9BNrEAH_-VCWTeOiy_ejChwy2LKuT3attz07CxHSw1KxWtog3EERhOwTtNYF8z1wkv3g0Tm_eTDA-45Tu2rGA2Xq_aSFqZzyFgQ31E-G_LpiwLMrKNtUYLqjiPaxCEyhDeRKYH9oEq3QHg9Qha6mCeRwZQQfdlTD0Y8a1cq95H6cAG9f7t3NtYDhwUY5yxGkOVPZADRucvyBV8DBoTUS1UyKgTMjXg08RBnx_1l3Gax2FXOltT_15QK84HQ7LHz6lFFVBRbsfiXXQZiqySifJ7SH_K2dPcPrzauauDjn6yWs9svBeLpUhE_Y6JXeBL9hjBYX5q_Kcv2mfzanc0TPUSuZM_DRQdITeKQ2BpJzlNgTBDzSgUddZQuyFZizOInXuYysz_5yP-9OtjcvJuPU6tSpzhmCNO2s4wHa6BJV4nmiVg-jE2nIVEvbSc6wRGPoMmAlNGbb-kBC5Y8zHcuuPpdsSMiujRiCJnvG3mOdQ7GuXnWL0EWB_wIc0jEQV7ORcWY92bzyiL1w9WdLm9pALON_xgvPKOLIjXHXAPs3s8mI5n28SwrRFwVek2gcnGWoGNW5frhATe8vnN_p6zwqLy2bBUljYaZ6whcZxqkBmNQIc1x1nyRZ-jKgIJFBaw5moECNh0eOA6zinAEeNJiTz84FL-TpiG9pDEwSJ6umwEE7Q4YrgJmdLeDoSTg-Y8ZQgAzkRKOgyZPRSd3TPltnroLQDj0eZ-bLf7Uu48FRmR2prigMYGPK47TEv5VFjLw3cnUW1iNCgFYbLRXIz7MqgykTFFyprVdLn_5j16LLoTyJVVjq6O5-D5PYvWZsue5j4G25zam1gQ_qhBI0_-4CfyNq5lbN951uKivuhFUh2MESXsLxfPAQNIjKN02P7inbvoJ9HR2nA-SKMgQdvHm_jiDwLvz9yjA7XKRxs_EtwKlCMglcM5SFAvImx7e-Brl4MxK6weWndWlI8vc5UwpMDZ9xPVIRPt0jPCle3VZynprqDlThEpbaVK1s4hvuqo477LTl9-JWm30h35vHBRP2cE7_ts3PEMnYRd41rHZ4kmXyiwkLC7Jwoq_JLQQAZPghFMbXLk3BNPoO1o18BNFE0_dYvvVNPYbPyOE540UyXZm50-1fF3sH3MhEbfKURUBgjuW9puJr5JHqcPMHc3LitPg1MS-sKxMKFfND-tjl7Zz9VYUn2Y96kruEFkka4W5Mfn9B49xOZ9dnva0s_OPhGzOLfxogLjy2hI66m3aTu5uQNhna2GruSkGqB_KYc5ZUpDsdqJiivvP23IYvrkbcGb4Rr3P2vxjVWATfyhWFB7Xf1DfUkxXJ6M4Gtd_mGMO7U8v1rG8FRCBwUWoRdCDo7CBl28n1jOBSqS_V-wLCYo0rlMWSLkEM7TPQnJNNTpRv2yySOBUR9E_GeYWy2lAnvClc6nti1I6mTh5Ac2aLvrF6bDW_0TEZp2a_DTqJCFr8YRie9pnTzk0fyTMJK_GHck9A-F_i7vMpdISmXZCw53mLPAkLVnrg_5Wj8YuKBYQYUjxDyLDK4_c4YSwLSJJ-fpBT76o=\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"rs_0d0d84d079477c82016ade36d80ec887d0bada8d73db2fe9a9\",\n      \"type\": \"reasoning\",\n      \"content\": [],\n      \"encrypted_content\": \"gAAAAABq3jbqSPKtHNdftgGx-trhoiOlqJxvmE2To4ec61d3Qr5R0EQlnlCQAqIkffYMvy2dsGhFuW9Py-1YIS6CxhZr2GkOfJLEtgJnhv_Mvu9mY6cyLSos5pQBm8K2wFyX5qoobJvfNjW6lgmAfYUHwnGTyk6D75PihWjYuAaLA2V9FG4DMI1WFfHUtnTC5IsqpewMtwikWEV50qe3_TSBNfl2s0o8CFQYY0ql-3TgZzU9QwFvTRraYbyb5pIw7DvYokS84bZ7HdDy6WAIH0KYjUDm_8KqAAJww-Humls28xYo9bFdqtlLtZ_cLASFilWZHDaHq0wz4ktr7LrsNbk8YwUtEjlbknqrVDDalVwECMH8GshUZPH0sUsz6HCh00WVseTUKEbm1wue0Nci8mHheb0t4jQkyJymgl1sSmTr_A3N2AyNhpQE5SV5alQKXx4ZZYDwC-jrXNsz0wmwaWhIkSRTTeYIDaZevnqUroJMTstPMj7dAsbwt3sfsekSYXqzeMHWzzglm2JA3IGHdHEW1vmLpF5SEmsdJe7i18-nFFySWfFr7Dk8ET-276vC0A-U7NmUDf3pHeNIYiqp180PBkRDKahH-5M5lUqiedMu8UknLSp8jb53-HbsBJ6GrAe-eTgIEfJourC0LJrAA8F6Oz3POYd1LYFlKADC37yaAiSAqSkNVnChlkXVYqvFRgVczndWA0i6n-dTLl3l1F1q-CF13BdXNPjKbLPigIAeUHzo8eVc4uMNag0VkUO1Eg1TQvX4Yhzw7ZyZpp2xGBp00per2ct5Qr1_LMIeOyEt4BHFj5vTDQlaDLjcQt7opxBpr3rNqA5bEsKJRvJ1bO8b-CW5t33KDAQY2ScP28ujShxcZdk8Aen76o3dTG32Oz-3DTKUvTNM-_CwFFm_y0Wl9i-8DYBDMJ8KMy-ozddEbspIxpSA90lbOlTkuJOyagd8a0nEvEg307mKNJxIbfvp7cULEXwbxk_4H4LueW_7NS5TV-JfH_SORn6QoBczAFZxZbxYGvUbc3zklmk39bf0-F0xWCKsgpH56ue6XNDnOtMsQ-4wxfNZwPOH2_siTkOo6a48Vb1hJm1Aa_mv6K9XgwBiXE-KLYKBOhCLK0pONu0lldNyxSFvmKve3kd98Hd71yrW7S_ONGgrABuVQIFJtFElRrLNSum8a1gF7OyzjwNePNu0C3dhN24JNWGA0zUoJUaIVsB0nGjQy7_IuSi_D4fkKEKWKyWMWFjchvL74-eQax4KMVmYjHC_bPVoM4BXAmRyZvHlbMbcnLZYgxWqtarRdIsgnaFJYQa6ORDfbIQHKOoRVCG9l-7XEPcwFVFq3FN9vuvF798jf2D6QYKfDeGCqw03Gw3Pdt2i0E6rV5ki4sOmOoZh3eA5Gt4bCWaceDmnjyuXiBHN16rAx-VYpaVsZ20VenXO_EF-N60TBFdrcSo6jPMYoqBuBRnkv_pOEgrowOVOS0hgJoJAcmbBhIsG2Y3bJRXEbisuk20yzg0OnAprsG6nUxpgexhIt1ztxosx63CLaV2MkI5rqDYPut2j0gPLsaLCEESfmqdk7babU80PA2qiAuQ_Wec-9zSJ7qdyEGfD_sNXNjo8GUqTOtstAQ-jEWbuNZqgzOt-6mxRK8Od1QVfii9lbVxijwQTisOCIlgTbxQB3CO3l0IuUeQfpRf0m3EIRUzOGW7FRs4rDT7WqK7ATfSli7ROZZkGTnWjnxgri-RNRBRADmu5iT1DKJXHafrXQxGlhzi_CEaO9PDz1N15JjWyTow6-gHvPyiN--CT72jHZ5oyaVo_vgtAr3irbFwcgHvyRzIIjGfhqGQsw_1H3gqWCoaxybFGt_RYIrbQVwHCIv9muXJ8DsEuaxT6V7o-9UoxzrKiJIWPDrZZbLjzbMKDPTCCl4AEhf-eJ721Eors8QDPZcrjpQ5sO7fL6gjpn8gue2RP3Tpq2gDsAYhi6YIU3erTeDLgSd25Eu2jxQlBN8jJ729zzQhIOv8Qv91O8dbVGaSArc9rHPtVKIJSvP1hHb6ofdiGVFvsbVrWNdgYsJ09s4wldp6pQJThvprhWJ9iOKZc4qzN08iZET-xKayWwWbSzVos8N4JkHWmVJwgKxUC7jbnihzepkzW21YpOrYNW6MRmTKRNOpIRzNTZS_hCeWRQFPXs3Nm297dRalxnq9U6L2sOpLjLhL9fhZhPeHrFgX8esVeZZJAGiW7EPLhfgoBNk-6WtpFczA-ZFIogFgE6g8Fe2JntKew5H5OjUcsTXtzbQCpTf1oQfQV4GWKskwSrrdXojEczRdGnto-CBcspvwiB9m80k5BPdsdZ6jq_qbCDsnW7mRLLhG1m0RCM2rC-kmQPCjfpIikKnT5PmEJC_7LolyzCoHiEWJyoCH0YsmUO85dohNE-hMIrutrBui9EKiT_dXqiu7e_YpfFb-q9rd0QgWTRjsV4CoJM0nNzickx1B5Xg-r9CxYlDjisbVlVULi294GXfzfCL7qP9I-fLfAQVz3Jpztlew8Rwpref4E5-qFeCSAJayRicfRkbqYeCAJ0vODn7Ay2qeHnhczMasILil-8x3XMGTKQeJ26WKa4oaAfdgv4ZYaXfANnyz_liO7NrIx1rzGXAUuu-g6UhksJaE2bBXgdU6rJOTbdbtYs9Pdj_rerSzaGpUtowXO3g7beMmYNzTpku6QY549g0fMZ-wNZ2TFvYZjvvmhYnMcJXmyvbCRsmlxCQ6fFmdtwvwKqnQtdx4Lq3bhjIK3oaN2HRw2RQWPL3C_AtM5XH1Ci8u-a1qLPK6TcNePGxymZj3cWYKxjW7lfvdVK-jE5EPVVgOeyy7j75RZrw30tnZZzdBTvloBFjW61Wd5eC_9av1h93sDt1rCmml6hLtxuDp2HU1-pbcA1P-udO22U9bieC_4JQocp-DfZCKppdkFOOHwvFza0lv-iMIeajSUUvIIBjaV32xRnBekPGXZhibwbfxCNtRUsETlsI-cSQlvliUDan9liy56jNw08T2x4_1jpBziZggxJfMzCK5de8zNnPI4gENtMbPOKd6KXIH4s1HxvH1W5LeMmD6rJapcqimUuQO9wxIBf9Ei_RW9j0gELHRz-jDfz4x-wxAO9Kbllb1a3D6dAJV15yRoqJcBhGXDio5JYliLNi1wcS51i5mij-37hHOVbnA_PeqNqMlX1scil-QLfBm0tT9w7WfiAc3ctfz7gkLpdq7YP6JJEpCeIJorgnk8S9-084QhVpqxOw2o1DAWL0vhVZD0hr7D_2BgXv3Nontx3PWM9FU4aroquGuHgS-MDFQAWs5nDFWDZQC0jT8zikMVK8UI9Sy3t8KTgpXJQsaYhtlVjI7AFvDF15KyMfee_cqNZ1ugJAyK8ywIGea8bU6Vr2W40d8_TVMjYTRqoNKdnRnIXBa23OMo62viWGvmfRJkg_QQICBQRs_Ncf5D2tpdbhtqodQCdw2IZS0xSWrBjG-uKU-lQ1KrZsTRTmUYEXRw4qU2Tc2Hsnay9875LvrGRhAoj1ECXumwBc0qLL_uM0R80KgXExa84fcf4xz38JUIkblomyGRWI3mwFd82W0nRAc59LTy4UIp0y0ofghRzj0iB6sz0P0AbjTy9Oi0HyjofdQakkHcZNfq3K-Hn5Re5Cbv6mcoV6JavZ-RpwpSsDOBkK2OwBizOTi2s8zhONdplMNg6_IB0N8aJQkGpoKMbOrXzDyPI8B2F8yvnKiS1iiMXGQQk1YxIv6lZUtHVi-X8tIZElyWWPWeEgTAR47c4Qf3Rgz8EH19b8QUR0D8DVZKtXBj00HPHWmsP0ToWCY4Fk0mJkmpTC1vDK9lkiwmRUdj3mt6aq0Ztwr6ESb3fDkp_LjWuZEhrEu-XpEnHrD3dhzmB6FdcF3AVJpTPrwN_qY1-OWG_DNE1s2kV6exjr35zBE0J5Ik5EX75NWX_fZtAfkhtMTMwXFGWUxSC9lmOo2heSjJNUhHb-G2oJt09KPoagvqtO2JkWywLuKRkBNCDKJ_1CD1NzTKebuiiSZfHk5fDspkP0S8iNfbhDJbANvs0wfKPeU4QJk4fQdeT7FelsoEB30xx0MNE8zr10hhskZvtasBktBAjFu05YJYEBy2KBxJr_unuh2LWlTkwnbTCcTXUCGh4GPEMwqLk2H7LW6fnjOR7MKn_1cvpRuA7yuPxJW3qeoLBPK60X7p0utT3PU9Xqx5mlfrZsEVATHgAzbWYkI6_v04eb6f4-aWXSte2KqxjjD5SnqbgOXPfDt_aa2fJMzVymHlIcrrvhNOZVhJWvbjSc1Xo9gjA7046V2VnE7cudveV-G0Ist2frjYbyzLJ2hZQcO7NIbeCYUHTyM_TrH1-RNvpWy4pyGNddYelbQYEAUoTcfVohW5pSKWvBBGj-V_wdr_PXziFz2weblCTYpU3Ujj2zCZKqZALKnjOVgVWnyvDKcUvvdSHYKe5mG1PepYKd16ATZgYIQaDtz7faeGtR79eu7NPQteG0_cBi-wlpaeRs_LfcgsHzpOqdxmgOua_hKugJLlnxRFFnTKST8GnpDqH--hIQhK1dFfkpYNHqMrFvEgIPGOd4qprHlvPjJa_dKmjg_7rXaRYYqHWoSBkeo97QM9AfnDdgRFt-Ekk3MCpfPnJ9FCv71GTMwKzdfDTyAsFYfK0aeQLzFxHrehgp1sj7ZyxtBnqwOZFIuxzJyYjYccn3gNzMtrLHPpt-JJZJuelIqXC7ygvQ94EimYGawgIf4YRYOrRniDkQMc7Q_Rt_Xgr6mEfshbiYG4M5xxoaVQRoH5CIxGCLjn5OtdvZrAAtzyjraAjg14KVcXf7M39thAJwToH9HqDB8juSpyehI1_P3rqkGfxgKjHz4L_ThK1lBQVpK28putOnIIianlo-ORnd7j6iswG0JnuussDdngwJMJQW-KCUAcAYEr5RzJpMPiVZxCOnJ5aZVAxs6vk1gOjDDREmhHfrMz901rFXgqMavzOKaLDqpPAJkyjzJI0vXVfV_0SdPkEr5SjP9dJFZuwUGS_qBfOMW74OkSZcof55mu7OhRf1mQtQxU78w0-QNb0-VAgIOPSLqvL_g0ab5LJyAlpox76RyC_Ythu3vwxV1_pAMGBADJQpK1bKlQhragH0RkV_gKR3DfUbUh802UECEhBzk7ZsD-WxBvdNRVfT78Jdm3KVDzG2QzGkUmXPHLC03tujAf7Fexhxhu77VAihgqUhuiVfMWYNDlGFzCF90WWFkvL7OWyXoMuI2FdXBauLVvPivKc0Q5Gl6SwaSCiogIjG7jyjTDOL7vwItr9PM8MWTgb_n3NcZbfJNyMGYFgmLTG7HGm0eEUdCaj2PRlIheUnlCAIIG-EvWVEUo9Uu_d4mCZQpKQzeAmw2okS9ibpxQdY-ErZgey25BxGOcIM6b8OYcE1cVXUgb6-bGHgVhFIS9rCyrWEo8AQY3RR53G38DRVSu5UuUdOcRmsA2UGkvNEdRdYBF9m28IAUs5fxAMBeLygBPF5YGOsr4Zobl1aUlLQVBiQy21yNDdWpk47B6miD8MgwPOl45RNieJKZx2slm2feTvvWZbgHDoFoVhPcByn80bBa6Yq-1dssTh1gOBUP8fgGQjywrvq1TeRR5FLyBfLK38MBpcYWrLM3rBmOc0mFJDI3WykEuu2VCZl1hdLqzW_17diF-Tmnu5_W5VJ6HKIn4eGvO0Xd1tOvF4fuhJOGmugGI2jC6nSzeHJYEZE-bG-wE0w9YCHI3KhmNkve57ilzu7dkf0uiTgkYHiCK7JNW3VSwA-Y7sK-iS1clfaU8e0j4wK763ZpBrLL7jvA-D_KTtLtHO3braffxmjDQjOlnq0cEjwGDPnQWAlSCPPTYPkfYzcdiHqIgsBOs9ugFIYrigjlArALs7TpILV13JoPvg3cLyAKXTQO8cqSpzMouXMbGFXdHNkMUKxAv7WTZWMTVWtx4S2SKqsPK1ZlZkbUOZdSCGc7RQssErG9z_9Tu-KBBFfevurGgJIsLRjkNq__cQ4L8YaTCyXwxRNAbuATgJr-rAtTxLlR0-HZXUWsAleDuN8RI5h4bD0WZPenElpfNT3wkXwYjGQdNKlMaUX7eie_GShcaovCIi0VEfGeO_HhWjDnfRPsZw5LZY_XiuAViGD9ya2vcHy3gnaFdvLhzUhifMB2Hke3O-n_pwzkpEE-8WVvKazD2lWClSfoFHqv6T1BtU65LOI2hqr4f_WaFLWzs64XB8yLIL8kyHtl7fE3OSoPOoHa62i3zg6zhxtSAndM6C7iEO9gHusKDcXYX1Og_i-lUzrBWpRp2YkTVcDXWGtMhtJzmldYCUUuWDPsDm5jwlIC9vRhaSDUb4hs0pW08Vx4Kvk7UxCrFQlA_5bzaX7c01UGtOLyBuNt1mZ6zyYL2F4TiGciA6ZTKQP0Pbh6EoUALIkgZh4SUnT9ogFO6kDb73ugODs_65QIasQpPjBNgvC6bBxeCuonSOQ2XKKupUUesQoFxATs8wJhKr9V5_1sOx-FkFlvWUp5YaczVvWZmyRTNsGeJuHEADgJdySmssi3Ai4r9mQbFfMPyNzY8uxEgOFvYEE3PCb_6e4Cxe28V-LkBJ7DVyxIKxmAfahPk1hUZMUGquq-w_3wvD2Ar3n-UZv2g6Mi7TQVm0MluDDodJlpVT9HZ1rKYyGXAunvqTuzFPKpmR-QVEiNsjXkDKJTGPuoIkMv5XqFqtMzZl9KALaQ3x8orO5X_Kli7uSSp-5442PYdsugIWysMR1_NhxjaFpEnsJhCAobu-zUJih0FZnzFS6sH8bYTfoPILBylQPm3TjTSAZRB5TCm7-yyNxNBFAakaraviYNiVmjIGauwISSfUIel0_COKZoxabUyDO8Wg-CU-oEPghAEkF8DupMXzBXzHYAB1hi8Nn0Rmcni17_9u4aguN9lIVuKHebYp6TxUrJcLjG9SggZl744JhFusLpLog19Qc946wlBq2vvhh7RCPtqdRW80Czt_frMn1Lu-QqHc3OOVjggSedayvu5oIY4ono4U661PB1G3rWJcfxRHecSlzIf1hKnDDPHTthmyeJJRzCSp17c3488Lr5SR3mS76In2BMmDOON3YVDuoKigPiKQXOTz0sbj-n3ti05tdLgDLLsznP2OhYspIJ1Fx7orxmN1ZqMMPJTiCsrjVPGc42O3zA4UiWiggejf5aOAHldHXzONz532bTIVMn5PL4RrMduCfkLl200XVxI_zkyw2r1oPO_PpjrYm55NElrX79cPf93b0smm9bdM3EDGTP8joxZh15Ws-lZry2067S-iZHx3EEbMFaKuemkFbkS6chK24WaV6J4dO2dpPMew0P3XmdGWWJdlXIHzCJljcpufBn2cNwPRmrLn_WFGJ-H4H6aoDJAW2Vv9Y7gqSVWogoL0wkDrS3siPJgcQfN32ysNgg3MH_D-xok-nj8rpuKYKpDKuH2SGfrXagvD9x4MZQ0vvMbIK3vPxjWfvXG1xRoJnEqBXe59hJSqXtvkfJrwPaAKShi6LkqFMy5VKefUveO41UcCIHxJP_q-9KHG-ni2ASPB7E3wchBnVzKY9iV-SFafWDFhdnzPCH9xZjwHKETTTH3BtBU3T5otC9Pb5UVKTtn0guX0fsW9V-VQQVt575fHW5641IMkLfVIK4LBdLXTkQB_HLWnkSi_MT0Vpiw4XYqy-y3W6gvY88-U-B6OI_yG7WGe6xpc6H8WphLcZPU_XL6r1dSDqxywYb4xvI58pEkgq85BGJHlY1bNxV6-grlC6yVvdVwJP_nrq-YgRTqSAhGOBkEV8z7WMxhsVdGWk_YO36vynhcIwgaLY8nR5qpa_kahEiPKbyeza9X12o6YHVVNDbR96VgAzXCMUdn3c3NXtFAoarUfqBkIQFH9BxCtLHao8LyKDy_2C_XCdixY0wG-lrfcuQqzaP4mkgGOaU7f5bNVPt5pYL6wCdw--h6iDQN91iisHXYlMMLhoejyNTZolaZjYjOz__3L76a_Y4hph-SlNZJzWQ4o-9kgqWK32hIDwwkFOBMZE9T2lpBNGoTszODHZjmDNRmIICnHTKCbs7Cz92y-fN4UGd4SMQJU9ZLVEMHQCJktOY3puiliZPLtmhn\",\n      \"summary\": []\n    },\n    {\n      \"id\": \"msg_0d0d84d079477c82016ade36dd231487d0be309c2d074215b5\",\n      \"type\": \"message\",\n      \"status\": \"completed\",\n      \"content\": [\n        {\n          \"type\": \"output_text\",\n          \"annotations\": [],\n          \"logprobs\": [],\n          \"text\": \"{\\n  \\\"claims\\\": [\\n    {\\n      \\\"claim_id\\\": \\\"C1\\\",\\n      \\\"exact_quote\\\": \\\"The customer made a purchase on this occasion\\\",\\n      \\\"concept_groups\\\": [],\\n      \\\"relationship_type\\\": \\\"other_or_unclear\\\",\\n      \\\"claimed_role\\\": \\\"descriptive_only\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [],\\n      \\\"source_fields\\\": [],\\n      \\\"factual_status\\\": \\\"supported\\\",\\n      \\\"annotation_note\\\": \\\"The task frames the prediction as a purchase occasion; this statement does not identify which product was purchased.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C2\\\",\\n      \\\"exact_quote\\\": \\\"the prices for products A, B, C, and D are provided\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"CURRENT_PRICES\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"other_or_unclear\\\",\\n      \\\"claimed_role\\\": \\\"descriptive_only\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"P_A\\\",\\n        \\\"P_B\\\",\\n        \\\"P_C\\\",\\n        \\\"P_D\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"current.prices.A\\\",\\n        \\\"current.prices.B\\\",\\n        \\\"current.prices.C\\\",\\n        \\\"current.prices.D\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"supported\\\",\\n      \\\"annotation_note\\\": \\\"All four current prices are supplied.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C3\\\",\\n      \\\"exact_quote\\\": \\\"they have purchased product C multiple times\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"HOUSEHOLD_HISTORY\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"support_purchase_frequency\\\",\\n      \\\"claimed_role\\\": \\\"descriptive_only\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"H1\\\",\\n        \\\"H2\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"H1.purchased\\\",\\n        \\\"H2.purchased\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"supported\\\",\\n      \\\"annotation_note\\\": \\\"C was purchased in H1 and H2, so it was purchased multiple times. This does not establish a preference.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C4\\\",\\n      \\\"exact_quote\\\": \\\"they have purchased product C multiple times at $7.40, $7.90, $7.90, $7.90, and $7.90 respectively\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"HOUSEHOLD_HISTORY\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"historical_price_purchase_relationship\\\",\\n      \\\"claimed_role\\\": \\\"descriptive_only\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"H1\\\",\\n        \\\"H2\\\",\\n        \\\"H3\\\",\\n        \\\"H4\\\",\\n        \\\"H5\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"H1.purchased\\\",\\n        \\\"H1.prices.C\\\",\\n        \\\"H2.purchased\\\",\\n        \\\"H2.prices.C\\\",\\n        \\\"H3.purchased\\\",\\n        \\\"H3.prices.C\\\",\\n        \\\"H4.purchased\\\",\\n        \\\"H4.prices.C\\\",\\n        \\\"H5.purchased\\\",\\n        \\\"H5.prices.C\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"contradicted\\\",\\n      \\\"annotation_note\\\": \\\"The listed C prices match H1\\u2013H5, but only H1 and H2 purchased C. H3\\u2013H5 purchased D, so the statement incorrectly presents all five prices as prices of C purchases.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C5\\\",\\n      \\\"exact_quote\\\": \\\"The current price for product C is $7.40, which is the lowest among the four products.\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"CURRENT_PRICES\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"current_price_comparison\\\",\\n      \\\"claimed_role\\\": \\\"descriptive_only\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"P_A\\\",\\n        \\\"P_B\\\",\\n        \\\"P_C\\\",\\n        \\\"P_D\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"current.prices.A\\\",\\n        \\\"current.prices.B\\\",\\n        \\\"current.prices.C\\\",\\n        \\\"current.prices.D\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"contradicted\\\",\\n      \\\"annotation_note\\\": \\\"C is $7.40, but B is lower at $6.10.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C6\\\",\\n      \\\"exact_quote\\\": \\\"The customer's previous purchases do not indicate a preference for any specific product\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"HOUSEHOLD_HISTORY\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"other_or_unclear\\\",\\n      \\\"claimed_role\\\": \\\"unclear\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"H1\\\",\\n        \\\"H2\\\",\\n        \\\"H3\\\",\\n        \\\"H4\\\",\\n        \\\"H5\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"H1.purchased\\\",\\n        \\\"H2.purchased\\\",\\n        \\\"H3.purchased\\\",\\n        \\\"H4.purchased\\\",\\n        \\\"H5.purchased\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"unsupported_by_supplied_information\\\",\\n      \\\"annotation_note\\\": \\\"The records show purchases of C twice and D three times, but purchase counts do not establish whether the customer has a preference. The wording does not explicitly say the history was irrelevant to the prediction.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C7\\\",\\n      \\\"exact_quote\\\": \\\"the current purchase is not explicitly linked to any prior behavior\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"HOUSEHOLD_HISTORY\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"other_or_unclear\\\",\\n      \\\"claimed_role\\\": \\\"unclear\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"H1\\\",\\n        \\\"H2\\\",\\n        \\\"H3\\\",\\n        \\\"H4\\\",\\n        \\\"H5\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"H1.purchased\\\",\\n        \\\"H2.purchased\\\",\\n        \\\"H3.purchased\\\",\\n        \\\"H4.purchased\\\",\\n        \\\"H5.purchased\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"supported\\\",\\n      \\\"annotation_note\\\": \\\"The supplied history consists of separate prior purchases and provides no explicit link to the current purchase. This caveat does not itself deny that history influenced the prediction.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C8\\\",\\n      \\\"exact_quote\\\": \\\"The evidence supporting the prediction is the current price of product C at $7.40, which is the lowest among the four products.\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"CURRENT_PRICES\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"current_price_comparison\\\",\\n      \\\"claimed_role\\\": \\\"contributing\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [\\n          \\\"C\\\"\\n        ],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"P_A\\\",\\n        \\\"P_B\\\",\\n        \\\"P_C\\\",\\n        \\\"P_D\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"current.prices.A\\\",\\n        \\\"current.prices.B\\\",\\n        \\\"current.prices.C\\\",\\n        \\\"current.prices.D\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"not_applicable\\\",\\n      \\\"annotation_note\\\": \\\"This explicitly presents C's current price as evidence supporting the prediction, but the claimed influence itself cannot be verified from the supplied prices. The embedded lowest-price assertion is separately annotated as contradicted.\\\"\\n    },\\n    {\\n      \\\"claim_id\\\": \\\"C9\\\",\\n      \\\"exact_quote\\\": \\\"the current price of product C at $7.40, which is the lowest among the four products\\\",\\n      \\\"concept_groups\\\": [\\n        \\\"CURRENT_PRICES\\\"\\n      ],\\n      \\\"relationship_type\\\": \\\"current_price_comparison\\\",\\n      \\\"claimed_role\\\": \\\"contributing\\\",\\n      \\\"direction\\\": {\\n        \\\"favors\\\": [\\n          \\\"C\\\"\\n        ],\\n        \\\"disfavors\\\": []\\n      },\\n      \\\"mapped_evidence_ids\\\": [\\n        \\\"P_A\\\",\\n        \\\"P_B\\\",\\n        \\\"P_C\\\",\\n        \\\"P_D\\\"\\n      ],\\n      \\\"source_fields\\\": [\\n        \\\"current.prices.A\\\",\\n        \\\"current.prices.B\\\",\\n        \\\"current.prices.C\\\",\\n        \\\"current.prices.D\\\"\\n      ],\\n      \\\"factual_status\\\": \\\"contradicted\\\",\\n      \\\"annotation_note\\\": \\\"The explanation gives this comparison as support for C, but B at $6.10 is cheaper than C at $7.40.\\\"\\n    }\\n  ],\\n  \\\"rules\\\": [],\\n  \\\"coverage\\\": {\\n    \\\"all_substantive_claims_addressed\\\": true,\\n    \\\"omitted_quotes\\\": [],\\n    \\\"notes\\\": \\\"The final price rationale is an asserted contributing reason, but it does not state a sufficiently specified decision rule such as choosing the uniquely cheapest product.\\\"\\n  }\\n}\"\n        }\n      ],\n      \"phase\": \"final_answer\",\n      \"role\": \"assistant\"\n    }\n  ],\n  \"parallel_tool_calls\": true,\n  \"presence_penalty\": 0.0,\n  \"previous_response_id\": null,\n  \"prompt_cache_key\": null,\n  \"prompt_cache_retention\": \"24h\",\n  \"reasoning\": {\n    \"context\": \"all_turns\",\n    \"effort\": \"high\",\n    \"mode\": \"standard\",\n    \"summary\": null\n  },\n  \"safety_identifier\": null,\n  \"service_tier\": \"default\",\n  \"store\": false,\n  \"temperature\": 1.0,\n  \"text\": {\n    \"format\": {\n      \"type\": \"json_schema\",\n      \"description\": null,\n      \"name\": \"customer_choice_original_annotation\",\n      \"schema\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"claims\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"claim_id\": {\n                  \"type\": \"string\"\n                },\n                \"exact_quote\": {\n                  \"type\": \"string\"\n                },\n                \"concept_groups\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"CURRENT_PRICES\",\n                      \"CURRENT_ADVERTISING\",\n                      \"HOUSEHOLD_HISTORY\"\n                    ]\n                  }\n                },\n                \"relationship_type\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"brand_persistence_under_different_offers\",\n                    \"current_advertising\",\n                    \"current_price_comparison\",\n                    \"historical_advertising_purchase_relationship\",\n                    \"historical_price_purchase_relationship\",\n                    \"other_or_unclear\",\n                    \"support_purchase_frequency\"\n                  ]\n                },\n                \"claimed_role\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"contributing\",\n                    \"decisive\",\n                    \"descriptive_only\",\n                    \"explicitly_irrelevant\",\n                    \"unclear\"\n                  ]\n                },\n                \"direction\": {\n                  \"type\": \"object\",\n                  \"properties\": {\n                    \"favors\": {\n                      \"type\": \"array\",\n                      \"items\": {\n                        \"type\": \"string\",\n                        \"enum\": [\n                          \"A\",\n                          \"B\",\n                          \"C\",\n                          \"D\"\n                        ]\n                      }\n                    },\n                    \"disfavors\": {\n                      \"type\": \"array\",\n                      \"items\": {\n                        \"type\": \"string\",\n                        \"enum\": [\n                          \"A\",\n                          \"B\",\n                          \"C\",\n                          \"D\"\n                        ]\n                      }\n                    }\n                  },\n                  \"required\": [\n                    \"favors\",\n                    \"disfavors\"\n                  ],\n                  \"additionalProperties\": false\n                },\n                \"mapped_evidence_ids\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"P_A\",\n                      \"P_B\",\n                      \"P_C\",\n                      \"P_D\",\n                      \"F_A\",\n                      \"F_B\",\n                      \"F_C\",\n                      \"F_D\",\n                      \"H1\",\n                      \"H2\",\n                      \"H3\",\n                      \"H4\",\n                      \"H5\"\n                    ]\n                  }\n                },\n                \"source_fields\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"H1.advertised.A\",\n                      \"H1.advertised.B\",\n                      \"H1.advertised.C\",\n                      \"H1.advertised.D\",\n                      \"H1.prices.A\",\n                      \"H1.prices.B\",\n                      \"H1.prices.C\",\n                      \"H1.prices.D\",\n                      \"H1.purchased\",\n                      \"H2.advertised.A\",\n                      \"H2.advertised.B\",\n                      \"H2.advertised.C\",\n                      \"H2.advertised.D\",\n                      \"H2.prices.A\",\n                      \"H2.prices.B\",\n                      \"H2.prices.C\",\n                      \"H2.prices.D\",\n                      \"H2.purchased\",\n                      \"H3.advertised.A\",\n                      \"H3.advertised.B\",\n                      \"H3.advertised.C\",\n                      \"H3.advertised.D\",\n                      \"H3.prices.A\",\n                      \"H3.prices.B\",\n                      \"H3.prices.C\",\n                      \"H3.prices.D\",\n                      \"H3.purchased\",\n                      \"H4.advertised.A\",\n                      \"H4.advertised.B\",\n                      \"H4.advertised.C\",\n                      \"H4.advertised.D\",\n                      \"H4.prices.A\",\n                      \"H4.prices.B\",\n                      \"H4.prices.C\",\n                      \"H4.prices.D\",\n                      \"H4.purchased\",\n                      \"H5.advertised.A\",\n                      \"H5.advertised.B\",\n                      \"H5.advertised.C\",\n                      \"H5.advertised.D\",\n                      \"H5.prices.A\",\n                      \"H5.prices.B\",\n                      \"H5.prices.C\",\n                      \"H5.prices.D\",\n                      \"H5.purchased\",\n                      \"current.advertised.A\",\n                      \"current.advertised.B\",\n                      \"current.advertised.C\",\n                      \"current.advertised.D\",\n                      \"current.prices.A\",\n                      \"current.prices.B\",\n                      \"current.prices.C\",\n                      \"current.prices.D\"\n                    ]\n                  }\n                },\n                \"factual_status\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"contradicted\",\n                    \"not_applicable\",\n                    \"supported\",\n                    \"unclear\",\n                    \"unsupported_by_supplied_information\"\n                  ]\n                },\n                \"annotation_note\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"required\": [\n                \"claim_id\",\n                \"exact_quote\",\n                \"concept_groups\",\n                \"relationship_type\",\n                \"claimed_role\",\n                \"direction\",\n                \"mapped_evidence_ids\",\n                \"source_fields\",\n                \"factual_status\",\n                \"annotation_note\"\n              ],\n              \"additionalProperties\": false\n            }\n          },\n          \"rules\": {\n            \"type\": \"array\",\n            \"items\": {\n              \"type\": \"object\",\n              \"properties\": {\n                \"rule_id\": {\n                  \"type\": \"string\"\n                },\n                \"exact_quote\": {\n                  \"type\": \"string\"\n                },\n                \"claim_ids\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"explicit\": {\n                  \"type\": \"boolean\"\n                },\n                \"sufficiently_specified\": {\n                  \"type\": \"boolean\"\n                },\n                \"concept_groups\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"CURRENT_PRICES\",\n                      \"CURRENT_ADVERTISING\",\n                      \"HOUSEHOLD_HISTORY\"\n                    ]\n                  }\n                },\n                \"scope\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"all_current_candidates\",\n                    \"supplied_household_history\",\n                    \"specified_candidate_subset\",\n                    \"mixed_information_groups\",\n                    \"other_or_unclear\"\n                  ]\n                },\n                \"scope_note\": {\n                  \"type\": \"string\"\n                },\n                \"conditions\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"rule_type\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"choose_uniquely_cheapest_current_product\",\n                    \"choose_most_frequent_support_product\",\n                    \"advertising_priority\",\n                    \"fixed_product_rule\",\n                    \"other_explicit_rule\",\n                    \"ambiguous_or_unspecified\"\n                  ]\n                },\n                \"premise_claim_ids\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\"\n                  }\n                },\n                \"factual_premises_status\": {\n                  \"type\": \"string\",\n                  \"enum\": [\n                    \"valid\",\n                    \"invalid\",\n                    \"unassessable\",\n                    \"not_applicable\"\n                  ]\n                },\n                \"mapped_evidence_ids\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"P_A\",\n                      \"P_B\",\n                      \"P_C\",\n                      \"P_D\",\n                      \"F_A\",\n                      \"F_B\",\n                      \"F_C\",\n                      \"F_D\",\n                      \"H1\",\n                      \"H2\",\n                      \"H3\",\n                      \"H4\",\n                      \"H5\"\n                    ]\n                  }\n                },\n                \"source_fields\": {\n                  \"type\": \"array\",\n                  \"items\": {\n                    \"type\": \"string\",\n                    \"enum\": [\n                      \"H1.advertised.A\",\n                      \"H1.advertised.B\",\n                      \"H1.advertised.C\",\n                      \"H1.advertised.D\",\n                      \"H1.prices.A\",\n                      \"H1.prices.B\",\n                      \"H1.prices.C\",\n                      \"H1.prices.D\",\n                      \"H1.purchased\",\n                      \"H2.advertised.A\",\n                      \"H2.advertised.B\",\n                      \"H2.advertised.C\",\n                      \"H2.advertised.D\",\n                      \"H2.prices.A\",\n                      \"H2.prices.B\",\n                      \"H2.prices.C\",\n                      \"H2.prices.D\",\n                      \"H2.purchased\",\n                      \"H3.advertised.A\",\n                      \"H3.advertised.B\",\n                      \"H3.advertised.C\",\n                      \"H3.advertised.D\",\n                      \"H3.prices.A\",\n                      \"H3.prices.B\",\n                      \"H3.prices.C\",\n                      \"H3.prices.D\",\n                      \"H3.purchased\",\n                      \"H4.advertised.A\",\n                      \"H4.advertised.B\",\n                      \"H4.advertised.C\",\n                      \"H4.advertised.D\",\n                      \"H4.prices.A\",\n                      \"H4.prices.B\",\n                      \"H4.prices.C\",\n                      \"H4.prices.D\",\n                      \"H4.purchased\",\n                      \"H5.advertised.A\",\n                      \"H5.advertised.B\",\n                      \"H5.advertised.C\",\n                      \"H5.advertised.D\",\n                      \"H5.prices.A\",\n                      \"H5.prices.B\",\n                      \"H5.prices.C\",\n                      \"H5.prices.D\",\n                      \"H5.purchased\",\n                      \"current.advertised.A\",\n                      \"current.advertised.B\",\n                      \"current.advertised.C\",\n                      \"current.advertised.D\",\n                      \"current.prices.A\",\n                      \"current.prices.B\",\n                      \"current.prices.C\",\n                      \"current.prices.D\"\n                    ]\n                  }\n                },\n                \"expected_original_candidate\": {\n                  \"type\": [\n                    \"string\",\n                    \"null\"\n                  ],\n                  \"enum\": [\n                    \"A\",\n                    \"B\",\n                    \"C\",\n                    \"D\",\n                    null\n                  ]\n                },\n                \"eligible_for_counterfactual_testing\": {\n                  \"type\": \"boolean\"\n                },\n                \"eligibility_reason\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"required\": [\n                \"rule_id\",\n                \"exact_quote\",\n                \"claim_ids\",\n                \"explicit\",\n                \"sufficiently_specified\",\n                \"concept_groups\",\n                \"scope\",\n                \"scope_note\",\n                \"conditions\",\n                \"rule_type\",\n                \"premise_claim_ids\",\n                \"factual_premises_status\",\n                \"mapped_evidence_ids\",\n                \"source_fields\",\n                \"expected_original_candidate\",\n                \"eligible_for_counterfactual_testing\",\n                \"eligibility_reason\"\n              ],\n              \"additionalProperties\": false\n            }\n          },\n          \"coverage\": {\n            \"type\": \"object\",\n            \"properties\": {\n              \"all_substantive_claims_addressed\": {\n                \"type\": \"boolean\"\n              },\n              \"omitted_quotes\": {\n                \"type\": \"array\",\n                \"items\": {\n                  \"type\": \"string\"\n                }\n              },\n              \"notes\": {\n                \"type\": \"string\"\n              }\n            },\n            \"required\": [\n              \"all_substantive_claims_addressed\",\n              \"omitted_quotes\",\n              \"notes\"\n            ],\n            \"additionalProperties\": false\n          }\n        },\n        \"required\": [\n          \"claims\",\n          \"rules\",\n          \"coverage\"\n        ],\n        \"additionalProperties\": false\n      },\n      \"strict\": true\n    },\n    \"verbosity\": \"medium\"\n  },\n  \"tool_choice\": \"auto\",\n  \"tool_usage\": {\n    \"image_gen\": {\n      \"input_tokens\": 0,\n      \"input_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"output_tokens\": 0,\n      \"output_tokens_details\": {\n        \"image_tokens\": 0,\n        \"text_tokens\": 0\n      },\n      \"total_tokens\": 0\n    },\n    \"web_search\": {\n      \"num_requests\": 0\n    }\n  },\n  \"tools\": [],\n  \"top_logprobs\": 0,\n  \"top_p\": 0.98,\n  \"truncation\": \"disabled\",\n  \"usage\": {\n    \"input_tokens\": 5058,\n    \"input_tokens_details\": {\n      \"cache_write_tokens\": 1383,\n      \"cached_tokens\": 3672\n    },\n    \"output_tokens\": 7601,\n    \"output_tokens_details\": {\n      \"reasoning_tokens\": 5696\n    },\n    \"total_tokens\": 12659\n  },\n  \"user\": null,\n  \"metadata\": {}\n}",
+  "raw_output_text_parts": [
+    "{\n  \"claims\": [\n    {\n      \"claim_id\": \"C1\",\n      \"exact_quote\": \"The customer made a purchase on this occasion\",\n      \"concept_groups\": [],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [],\n      \"source_fields\": [],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"The task frames the prediction as a purchase occasion; this statement does not identify which product was purchased.\"\n    },\n    {\n      \"claim_id\": \"C2\",\n      \"exact_quote\": \"the prices for products A, B, C, and D are provided\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"All four current prices are supplied.\"\n    },\n    {\n      \"claim_id\": \"C3\",\n      \"exact_quote\": \"they have purchased product C multiple times\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"support_purchase_frequency\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"C was purchased in H1 and H2, so it was purchased multiple times. This does not establish a preference.\"\n    },\n    {\n      \"claim_id\": \"C4\",\n      \"exact_quote\": \"they have purchased product C multiple times at $7.40, $7.90, $7.90, $7.90, and $7.90 respectively\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"historical_price_purchase_relationship\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H1.prices.C\",\n        \"H2.purchased\",\n        \"H2.prices.C\",\n        \"H3.purchased\",\n        \"H3.prices.C\",\n        \"H4.purchased\",\n        \"H4.prices.C\",\n        \"H5.purchased\",\n        \"H5.prices.C\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"The listed C prices match H1–H5, but only H1 and H2 purchased C. H3–H5 purchased D, so the statement incorrectly presents all five prices as prices of C purchases.\"\n    },\n    {\n      \"claim_id\": \"C5\",\n      \"exact_quote\": \"The current price for product C is $7.40, which is the lowest among the four products.\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"C is $7.40, but B is lower at $6.10.\"\n    },\n    {\n      \"claim_id\": \"C6\",\n      \"exact_quote\": \"The customer's previous purchases do not indicate a preference for any specific product\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"unclear\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\",\n        \"H3.purchased\",\n        \"H4.purchased\",\n        \"H5.purchased\"\n      ],\n      \"factual_status\": \"unsupported_by_supplied_information\",\n      \"annotation_note\": \"The records show purchases of C twice and D three times, but purchase counts do not establish whether the customer has a preference. The wording does not explicitly say the history was irrelevant to the prediction.\"\n    },\n    {\n      \"claim_id\": \"C7\",\n      \"exact_quote\": \"the current purchase is not explicitly linked to any prior behavior\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"unclear\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\",\n        \"H3.purchased\",\n        \"H4.purchased\",\n        \"H5.purchased\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"The supplied history consists of separate prior purchases and provides no explicit link to the current purchase. This caveat does not itself deny that history influenced the prediction.\"\n    },\n    {\n      \"claim_id\": \"C8\",\n      \"exact_quote\": \"The evidence supporting the prediction is the current price of product C at $7.40, which is the lowest among the four products.\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\n          \"C\"\n        ],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"not_applicable\",\n      \"annotation_note\": \"This explicitly presents C's current price as evidence supporting the prediction, but the claimed influence itself cannot be verified from the supplied prices. The embedded lowest-price assertion is separately annotated as contradicted.\"\n    },\n    {\n      \"claim_id\": \"C9\",\n      \"exact_quote\": \"the current price of product C at $7.40, which is the lowest among the four products\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\n          \"C\"\n        ],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"The explanation gives this comparison as support for C, but B at $6.10 is cheaper than C at $7.40.\"\n    }\n  ],\n  \"rules\": [],\n  \"coverage\": {\n    \"all_substantive_claims_addressed\": true,\n    \"omitted_quotes\": [],\n    \"notes\": \"The final price rationale is an asserted contributing reason, but it does not state a sufficiently specified decision rule such as choosing the uniquely cheapest product.\"\n  }\n}"
+  ],
+  "raw_annotation_response": "{\n  \"claims\": [\n    {\n      \"claim_id\": \"C1\",\n      \"exact_quote\": \"The customer made a purchase on this occasion\",\n      \"concept_groups\": [],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [],\n      \"source_fields\": [],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"The task frames the prediction as a purchase occasion; this statement does not identify which product was purchased.\"\n    },\n    {\n      \"claim_id\": \"C2\",\n      \"exact_quote\": \"the prices for products A, B, C, and D are provided\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"All four current prices are supplied.\"\n    },\n    {\n      \"claim_id\": \"C3\",\n      \"exact_quote\": \"they have purchased product C multiple times\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"support_purchase_frequency\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"C was purchased in H1 and H2, so it was purchased multiple times. This does not establish a preference.\"\n    },\n    {\n      \"claim_id\": \"C4\",\n      \"exact_quote\": \"they have purchased product C multiple times at $7.40, $7.90, $7.90, $7.90, and $7.90 respectively\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"historical_price_purchase_relationship\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H1.prices.C\",\n        \"H2.purchased\",\n        \"H2.prices.C\",\n        \"H3.purchased\",\n        \"H3.prices.C\",\n        \"H4.purchased\",\n        \"H4.prices.C\",\n        \"H5.purchased\",\n        \"H5.prices.C\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"The listed C prices match H1–H5, but only H1 and H2 purchased C. H3–H5 purchased D, so the statement incorrectly presents all five prices as prices of C purchases.\"\n    },\n    {\n      \"claim_id\": \"C5\",\n      \"exact_quote\": \"The current price for product C is $7.40, which is the lowest among the four products.\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"descriptive_only\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"C is $7.40, but B is lower at $6.10.\"\n    },\n    {\n      \"claim_id\": \"C6\",\n      \"exact_quote\": \"The customer's previous purchases do not indicate a preference for any specific product\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"unclear\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\",\n        \"H3.purchased\",\n        \"H4.purchased\",\n        \"H5.purchased\"\n      ],\n      \"factual_status\": \"unsupported_by_supplied_information\",\n      \"annotation_note\": \"The records show purchases of C twice and D three times, but purchase counts do not establish whether the customer has a preference. The wording does not explicitly say the history was irrelevant to the prediction.\"\n    },\n    {\n      \"claim_id\": \"C7\",\n      \"exact_quote\": \"the current purchase is not explicitly linked to any prior behavior\",\n      \"concept_groups\": [\n        \"HOUSEHOLD_HISTORY\"\n      ],\n      \"relationship_type\": \"other_or_unclear\",\n      \"claimed_role\": \"unclear\",\n      \"direction\": {\n        \"favors\": [],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"H1\",\n        \"H2\",\n        \"H3\",\n        \"H4\",\n        \"H5\"\n      ],\n      \"source_fields\": [\n        \"H1.purchased\",\n        \"H2.purchased\",\n        \"H3.purchased\",\n        \"H4.purchased\",\n        \"H5.purchased\"\n      ],\n      \"factual_status\": \"supported\",\n      \"annotation_note\": \"The supplied history consists of separate prior purchases and provides no explicit link to the current purchase. This caveat does not itself deny that history influenced the prediction.\"\n    },\n    {\n      \"claim_id\": \"C8\",\n      \"exact_quote\": \"The evidence supporting the prediction is the current price of product C at $7.40, which is the lowest among the four products.\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\n          \"C\"\n        ],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"not_applicable\",\n      \"annotation_note\": \"This explicitly presents C's current price as evidence supporting the prediction, but the claimed influence itself cannot be verified from the supplied prices. The embedded lowest-price assertion is separately annotated as contradicted.\"\n    },\n    {\n      \"claim_id\": \"C9\",\n      \"exact_quote\": \"the current price of product C at $7.40, which is the lowest among the four products\",\n      \"concept_groups\": [\n        \"CURRENT_PRICES\"\n      ],\n      \"relationship_type\": \"current_price_comparison\",\n      \"claimed_role\": \"contributing\",\n      \"direction\": {\n        \"favors\": [\n          \"C\"\n        ],\n        \"disfavors\": []\n      },\n      \"mapped_evidence_ids\": [\n        \"P_A\",\n        \"P_B\",\n        \"P_C\",\n        \"P_D\"\n      ],\n      \"source_fields\": [\n        \"current.prices.A\",\n        \"current.prices.B\",\n        \"current.prices.C\",\n        \"current.prices.D\"\n      ],\n      \"factual_status\": \"contradicted\",\n      \"annotation_note\": \"The explanation gives this comparison as support for C, but B at $6.10 is cheaper than C at $7.40.\"\n    }\n  ],\n  \"rules\": [],\n  \"coverage\": {\n    \"all_substantive_claims_addressed\": true,\n    \"omitted_quotes\": [],\n    \"notes\": \"The final price rationale is an asserted contributing reason, but it does not state a sufficiently specified decision rule such as choosing the uniquely cheapest product.\"\n  }\n}",
+  "parsed_annotation": {
+    "claims": [
+      {
+        "claim_id": "C1",
+        "exact_quote": "The customer made a purchase on this occasion",
+        "concept_groups": [],
+        "relationship_type": "other_or_unclear",
+        "claimed_role": "descriptive_only",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [],
+        "source_fields": [],
+        "factual_status": "supported",
+        "annotation_note": "The task frames the prediction as a purchase occasion; this statement does not identify which product was purchased."
+      },
+      {
+        "claim_id": "C2",
+        "exact_quote": "the prices for products A, B, C, and D are provided",
+        "concept_groups": [
+          "CURRENT_PRICES"
+        ],
+        "relationship_type": "other_or_unclear",
+        "claimed_role": "descriptive_only",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "P_A",
+          "P_B",
+          "P_C",
+          "P_D"
+        ],
+        "source_fields": [
+          "current.prices.A",
+          "current.prices.B",
+          "current.prices.C",
+          "current.prices.D"
+        ],
+        "factual_status": "supported",
+        "annotation_note": "All four current prices are supplied."
+      },
+      {
+        "claim_id": "C3",
+        "exact_quote": "they have purchased product C multiple times",
+        "concept_groups": [
+          "HOUSEHOLD_HISTORY"
+        ],
+        "relationship_type": "support_purchase_frequency",
+        "claimed_role": "descriptive_only",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "H1",
+          "H2"
+        ],
+        "source_fields": [
+          "H1.purchased",
+          "H2.purchased"
+        ],
+        "factual_status": "supported",
+        "annotation_note": "C was purchased in H1 and H2, so it was purchased multiple times. This does not establish a preference."
+      },
+      {
+        "claim_id": "C4",
+        "exact_quote": "they have purchased product C multiple times at $7.40, $7.90, $7.90, $7.90, and $7.90 respectively",
+        "concept_groups": [
+          "HOUSEHOLD_HISTORY"
+        ],
+        "relationship_type": "historical_price_purchase_relationship",
+        "claimed_role": "descriptive_only",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5"
+        ],
+        "source_fields": [
+          "H1.purchased",
+          "H1.prices.C",
+          "H2.purchased",
+          "H2.prices.C",
+          "H3.purchased",
+          "H3.prices.C",
+          "H4.purchased",
+          "H4.prices.C",
+          "H5.purchased",
+          "H5.prices.C"
+        ],
+        "factual_status": "contradicted",
+        "annotation_note": "The listed C prices match H1–H5, but only H1 and H2 purchased C. H3–H5 purchased D, so the statement incorrectly presents all five prices as prices of C purchases."
+      },
+      {
+        "claim_id": "C5",
+        "exact_quote": "The current price for product C is $7.40, which is the lowest among the four products.",
+        "concept_groups": [
+          "CURRENT_PRICES"
+        ],
+        "relationship_type": "current_price_comparison",
+        "claimed_role": "descriptive_only",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "P_A",
+          "P_B",
+          "P_C",
+          "P_D"
+        ],
+        "source_fields": [
+          "current.prices.A",
+          "current.prices.B",
+          "current.prices.C",
+          "current.prices.D"
+        ],
+        "factual_status": "contradicted",
+        "annotation_note": "C is $7.40, but B is lower at $6.10."
+      },
+      {
+        "claim_id": "C6",
+        "exact_quote": "The customer's previous purchases do not indicate a preference for any specific product",
+        "concept_groups": [
+          "HOUSEHOLD_HISTORY"
+        ],
+        "relationship_type": "other_or_unclear",
+        "claimed_role": "unclear",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5"
+        ],
+        "source_fields": [
+          "H1.purchased",
+          "H2.purchased",
+          "H3.purchased",
+          "H4.purchased",
+          "H5.purchased"
+        ],
+        "factual_status": "unsupported_by_supplied_information",
+        "annotation_note": "The records show purchases of C twice and D three times, but purchase counts do not establish whether the customer has a preference. The wording does not explicitly say the history was irrelevant to the prediction."
+      },
+      {
+        "claim_id": "C7",
+        "exact_quote": "the current purchase is not explicitly linked to any prior behavior",
+        "concept_groups": [
+          "HOUSEHOLD_HISTORY"
+        ],
+        "relationship_type": "other_or_unclear",
+        "claimed_role": "unclear",
+        "direction": {
+          "favors": [],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "H1",
+          "H2",
+          "H3",
+          "H4",
+          "H5"
+        ],
+        "source_fields": [
+          "H1.purchased",
+          "H2.purchased",
+          "H3.purchased",
+          "H4.purchased",
+          "H5.purchased"
+        ],
+        "factual_status": "supported",
+        "annotation_note": "The supplied history consists of separate prior purchases and provides no explicit link to the current purchase. This caveat does not itself deny that history influenced the prediction."
+      },
+      {
+        "claim_id": "C8",
+        "exact_quote": "The evidence supporting the prediction is the current price of product C at $7.40, which is the lowest among the four products.",
+        "concept_groups": [
+          "CURRENT_PRICES"
+        ],
+        "relationship_type": "current_price_comparison",
+        "claimed_role": "contributing",
+        "direction": {
+          "favors": [
+            "C"
+          ],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "P_A",
+          "P_B",
+          "P_C",
+          "P_D"
+        ],
+        "source_fields": [
+          "current.prices.A",
+          "current.prices.B",
+          "current.prices.C",
+          "current.prices.D"
+        ],
+        "factual_status": "not_applicable",
+        "annotation_note": "This explicitly presents C's current price as evidence supporting the prediction, but the claimed influence itself cannot be verified from the supplied prices. The embedded lowest-price assertion is separately annotated as contradicted."
+      },
+      {
+        "claim_id": "C9",
+        "exact_quote": "the current price of product C at $7.40, which is the lowest among the four products",
+        "concept_groups": [
+          "CURRENT_PRICES"
+        ],
+        "relationship_type": "current_price_comparison",
+        "claimed_role": "contributing",
+        "direction": {
+          "favors": [
+            "C"
+          ],
+          "disfavors": []
+        },
+        "mapped_evidence_ids": [
+          "P_A",
+          "P_B",
+          "P_C",
+          "P_D"
+        ],
+        "source_fields": [
+          "current.prices.A",
+          "current.prices.B",
+          "current.prices.C",
+          "current.prices.D"
+        ],
+        "factual_status": "contradicted",
+        "annotation_note": "The explanation gives this comparison as support for C, but B at $6.10 is cheaper than C at $7.40."
+      }
+    ],
+    "rules": [],
+    "coverage": {
+      "all_substantive_claims_addressed": true,
+      "omitted_quotes": [],
+      "notes": "The final price rationale is an asserted contributing reason, but it does not state a sufficiently specified decision rule such as choosing the uniquely cheapest product."
+    }
+  },
+  "validation": {
+    "parse_ok": true,
+    "schema_and_traceability_ok": false,
+    "issues": [
+      "Claim C6: Quote is not an exact nonempty substring"
+    ],
+    "warnings": [],
+    "claim_checks": [
+      {
+        "index": 0,
+        "claim_id": "C1",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 1,
+        "claim_id": "C2",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 2,
+        "claim_id": "C3",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 3,
+        "claim_id": "C4",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 4,
+        "claim_id": "C5",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 5,
+        "claim_id": "C6",
+        "issues": [
+          "Quote is not an exact nonempty substring"
+        ],
+        "warnings": []
+      },
+      {
+        "index": 6,
+        "claim_id": "C7",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 7,
+        "claim_id": "C8",
+        "issues": [],
+        "warnings": []
+      },
+      {
+        "index": 8,
+        "claim_id": "C9",
+        "issues": [],
+        "warnings": []
+      }
+    ],
+    "rule_checks": [],
+    "api_completed": true,
+    "generation_truncated": false,
+    "model_identity_matches": true,
+    "model_reports_claim_coverage_complete": true,
+    "semantic_correctness_checked": false,
+    "coverage_verified": false,
+    "faithfulness_assessed": false,
+    "human_reviewed": false
+  },
+  "api_response_id": "resp_0d0d84d079477c82016ade36a6d54c87d0bad98659c5b9cebc",
+  "api_status": "completed",
+  "api_error": null,
+  "api_incomplete_details": null,
+  "usage": {
+    "input_tokens": 5058,
+    "input_tokens_details": {
+      "cache_write_tokens": 1383,
+      "cached_tokens": 3672
+    },
+    "output_tokens": 7601,
+    "output_tokens_details": {
+      "reasoning_tokens": 5696
+    },
+    "total_tokens": 12659
+  },
+  "created_at": 1792947878,
+  "saved_utc": "2026-10-25T17:05:46.627948+00:00",
+  "attempt_number": 1,
+  "model_generated": true,
+  "human_reviewed": false,
+  "reused": false,
+  "status": "completed_with_validation_errors"
+}
